@@ -11,6 +11,13 @@ from transformers import AutoProcessor, Gemma3ForConditionalGeneration
 # モデルをグローバルに読み込み（コールドスタート時のみ）
 MODEL_ID = "google/translategemma-12b-it"
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+# Network Volumeを使う場合は /runpod-volume にマウント
+# 環境変数でキャッシュディレクトリを指定
+CACHE_DIR = os.environ.get("HF_HOME", "/runpod-volume/huggingface")
+os.environ["HF_HOME"] = CACHE_DIR
+os.environ["TRANSFORMERS_CACHE"] = f"{CACHE_DIR}/hub"
+
 model = None
 processor = None
 
@@ -21,12 +28,27 @@ def load_model():
 
     if model is None:
         print(f"Loading model: {MODEL_ID}")
-        processor = AutoProcessor.from_pretrained(MODEL_ID, token=HF_TOKEN)
+        print(f"Cache directory: {CACHE_DIR}")
+        print(f"HF_TOKEN set: {bool(HF_TOKEN)}")
+
+        # キャッシュディレクトリ作成
+        os.makedirs(CACHE_DIR, exist_ok=True)
+
+        print("Loading processor...")
+        processor = AutoProcessor.from_pretrained(
+            MODEL_ID,
+            token=HF_TOKEN,
+            cache_dir=f"{CACHE_DIR}/hub"
+        )
+
+        print("Loading model (this may take a while on first run)...")
         model = Gemma3ForConditionalGeneration.from_pretrained(
             MODEL_ID,
             torch_dtype=torch.bfloat16,
             device_map="auto",
             token=HF_TOKEN,
+            cache_dir=f"{CACHE_DIR}/hub",
+            low_cpu_mem_usage=True,
         )
         print("Model loaded successfully")
 

@@ -9,16 +9,8 @@ RUN pip install --no-cache-dir \
     accelerate \
     bitsandbytes \
     sentencepiece \
-    protobuf
-
-# HuggingFaceトークン（ビルド時に渡す）
-ARG HF_TOKEN
-ENV HF_TOKEN=${HF_TOKEN}
-
-# モデルを事前にダウンロード（オプション、イメージサイズ増加）
-# RUN python -c "from transformers import AutoProcessor, Gemma3ForConditionalGeneration; \
-#     AutoProcessor.from_pretrained('google/translategemma-12b-it', token='${HF_TOKEN}'); \
-#     Gemma3ForConditionalGeneration.from_pretrained('google/translategemma-12b-it', token='${HF_TOKEN}')"
+    protobuf \
+    huggingface_hub
 
 # ハンドラーコピー
 COPY handler.py /app/handler.py
