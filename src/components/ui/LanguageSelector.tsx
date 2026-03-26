@@ -1,0 +1,144 @@
+import { useState } from "react";
+import { View, Text, Pressable, Modal, FlatList, type ViewStyle } from "react-native";
+import { ChevronDown, Check } from "lucide-react-native";
+import { LANGUAGES, LANGUAGE_CODES } from "@/constants/languages";
+import { THEME } from "@/constants/theme";
+import type { LanguageCode } from "@/types/language";
+
+type LanguageSelectorProps = {
+  value: LanguageCode;
+  onChange: (code: LanguageCode) => void;
+  label?: string;
+  style?: ViewStyle;
+};
+
+/**
+ * 言語選択コンポーネント
+ */
+export function LanguageSelector({
+  value,
+  onChange,
+  label,
+  style,
+}: LanguageSelectorProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = LANGUAGES[value];
+
+  return (
+    <View style={style}>
+      {label ? (
+        <Text
+          style={{
+            fontSize: 13,
+            color: THEME.colors.textSecondary,
+            marginBottom: 4,
+          }}
+        >
+          {label}
+        </Text>
+      ) : null}
+      <Pressable
+        onPress={() => setIsOpen(true)}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: THEME.colors.surface,
+          borderWidth: 1,
+          borderColor: THEME.colors.border,
+          borderRadius: THEME.borderRadius.md,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}
+      >
+        <Text style={{ fontSize: 16, color: THEME.colors.text }}>
+          {selected.nativeName}
+        </Text>
+        <ChevronDown size={20} color={THEME.colors.textSecondary} />
+      </Pressable>
+
+      <Modal visible={isOpen} transparent animationType="slide">
+        <Pressable
+          onPress={() => setIsOpen(false)}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: THEME.colors.surface,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              maxHeight: "60%",
+              paddingTop: 16,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                textAlign: "center",
+                marginBottom: 16,
+                color: THEME.colors.text,
+              }}
+            >
+              言語を選択
+            </Text>
+            <FlatList
+              data={LANGUAGE_CODES}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => {
+                const lang = LANGUAGES[item];
+                const isSelected = item === value;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      onChange(item);
+                      setIsOpen(false);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingHorizontal: 20,
+                      paddingVertical: 14,
+                      backgroundColor: isSelected
+                        ? THEME.colors.primaryLight
+                        : "transparent",
+                    }}
+                  >
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: isSelected ? "600" : "400",
+                          color: THEME.colors.text,
+                        }}
+                      >
+                        {lang.nativeName}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          color: THEME.colors.textSecondary,
+                          marginTop: 2,
+                        }}
+                      >
+                        {lang.name}
+                      </Text>
+                    </View>
+                    {isSelected ? (
+                      <Check size={20} color={THEME.colors.primary} />
+                    ) : null}
+                  </Pressable>
+                );
+              }}
+            />
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}

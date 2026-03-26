@@ -1,0 +1,30 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+# 中央バーの設定アイコン（Settings）をタップ
+# 対面通訳テキストの近くにある設定アイコンをタップ
+- tapOn: "対面通訳"
+- waitForAnimationToEnd
+
+# 設定アイコンをタップ（通訳画面中央バー右端）
+- tapOn:
+    point: "95%, 50%"
+- waitForAnimationToEnd
+- assertVisible: "設定"
+
+# 設定画面に戻って直接設定ページへナビゲート
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    point: "95%, 50%"
+- waitForAnimationToEnd
+- assertVisible: "言語設定"
+- assertVisible: "自動音声再生"
+- assertVisible: "触覚フィードバック"
+
+# 戻る
+- back
+- waitForAnimationToEnd
+- assertVisible: "対面通訳"

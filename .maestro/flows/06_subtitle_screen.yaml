@@ -1,0 +1,18 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+- tapOn: "字幕"
+- waitForAnimationToEnd
+
+# 字幕画面の空状態テキスト確認
+- assertVisible: "リアルタイム字幕"
+- assertVisible: "録音ボタンを押すと、リアルタイムで字幕が表示されます"
+
+# 言語セレクター確認（デフォルト日本語とEnglish）
+- assertVisible: "日本語"
+- assertVisible: "English"
+
+# 字幕開始ボタン確認
+- assertVisible: "字幕を開始"

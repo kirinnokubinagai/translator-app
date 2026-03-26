@@ -1,0 +1,23 @@
+appId: host.exp.Exponent
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd
+# オンボーディングスライド1が表示されること
+- assertVisible: "対面通訳"
+- assertVisible: "スキップ"
+# スライド2へスワイプ
+- swipe:
+    direction: LEFT
+- waitForAnimationToEnd
+- assertVisible: "リアルタイム字幕"
+# スライド3へスワイプ
+- swipe:
+    direction: LEFT
+- waitForAnimationToEnd
+- assertVisible: "音声メモ"
+# 「始める」ボタンをタップ
+- tapOn: "始める"
+- waitForAnimationToEnd
+# メインタブ画面が表示されること
+- assertVisible: "通訳"

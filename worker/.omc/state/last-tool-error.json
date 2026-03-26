@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/kirinnokubinagaiyo/translator-app/worker\"}",
+  "error": "EISDIR: illegal operation on a directory, read '/Users/kirinnokubinagaiyo/translator-app/worker'",
+  "timestamp": "2026-03-25T02:28:07.655Z",
+  "retry_count": 1
+}

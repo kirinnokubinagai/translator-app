@@ -1,0 +1,18 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+# 通訳画面の話者1エリアの言語セレクターをタップ（デフォルトは日本語）
+- tapOn: "日本語"
+- waitForAnimationToEnd
+- assertVisible: "言語を選択"
+- assertVisible: "English"
+- assertVisible: "中文"
+- assertVisible: "한국어"
+
+# Englishを選択
+- tapOn: "English"
+- waitForAnimationToEnd
+- assertVisible: "English"
+- assertNotVisible: "言語を選択"

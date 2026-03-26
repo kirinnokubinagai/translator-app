@@ -1,0 +1,10 @@
+name = "translator-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+ALLOWED_ORIGIN = "*"
+
+[[kv_namespaces]]
+binding = "AUDIO_STORE"
+id = "5762ca42485b4224a7bfc2d43722009b"

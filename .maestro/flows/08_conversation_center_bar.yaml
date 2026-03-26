@@ -1,0 +1,18 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+# 通訳画面が表示されていること
+- assertVisible: "対面通訳"
+
+# 中央バーに言語入れ替えアイコンと設定アイコンがあること
+# (対面通訳テキストが中央バーに表示されている)
+# 字幕タブへ移動してから戻る（ナビゲーション確認）
+- tapOn: "字幕"
+- waitForAnimationToEnd
+- assertVisible: "字幕を開始"
+
+- tapOn: "通訳"
+- waitForAnimationToEnd
+- assertVisible: "対面通訳"

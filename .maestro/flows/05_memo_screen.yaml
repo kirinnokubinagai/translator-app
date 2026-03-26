@@ -1,0 +1,17 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+- tapOn: "メモ"
+- waitForAnimationToEnd
+
+# 言語セレクターラベルの確認
+- assertVisible: "話す言語"
+- assertVisible: "翻訳先"
+
+# 言語セレクター（日本語デフォルト）が表示されていること
+- assertVisible: "日本語"
+
+# 録音ボタンのラベル確認
+- assertVisible: "タップして録音"

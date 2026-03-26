@@ -1,0 +1,138 @@
+import { useCallback, useRef, useState } from "react";
+import {
+  useAudioRecorder as useExpoAudioRecorder,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from "expo-audio";
+import { audioToBase64 } from "@/services/audio/recorder";
+import { logger } from "@/lib/logger";
+
+/** チャンク録音間隔（ミリ秒） */
+const CHUNK_DURATION_MS = 5000;
+
+type UseAudioChunkerReturn = {
+  isActive: boolean;
+  error: string | null;
+  start: (onChunk: (base64: string) => void) => Promise<void>;
+  stop: () => Promise<void>;
+};
+
+/**
+ * 音声自動チャンクフック
+ *
+ * useExpoAudioRecorderフックのrecorderを使用し、
+ * 5秒ごとに自動で録音→停止→base64変換→コールバック→再録音を繰り返す。
+ * 再prepareに失敗した場合はループを停止しエラーを表示する。
+ */
+export function useAudioChunker(): UseAudioChunkerReturn {
+  const [isActive, setIsActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recorder = useExpoAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const shouldContinueRef = useRef(false);
+  const callbackRef = useRef<((base64: string) => void) | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * 1チャンクサイクルを実行する
+   *
+   * prepare → record → 5秒待機 → stop → base64取得 → コールバック → 次サイクル
+   */
+  const runChunkCycle = useCallback(async () => {
+    if (!shouldContinueRef.current) return;
+
+    try {
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+
+      await new Promise<void>((resolve) => {
+        timeoutRef.current = setTimeout(resolve, CHUNK_DURATION_MS);
+      });
+
+      if (!shouldContinueRef.current) return;
+
+      await recorder.stop();
+      const uri = recorder.uri;
+
+      if (uri && callbackRef.current) {
+        try {
+          const base64 = await audioToBase64(uri);
+          callbackRef.current(base64);
+        } catch (e) {
+          logger.warn("チャンクデータ読み取り失敗", {
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
+
+      if (shouldContinueRef.current) {
+        setTimeout(() => runChunkCycle(), 0);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error("チャンクサイクルエラー", { error: msg });
+      setError(msg);
+      shouldContinueRef.current = false;
+      setIsActive(false);
+    }
+  }, [recorder]);
+
+  /**
+   * チャンク録音を開始する
+   *
+   * @param onChunk - 各チャンクのbase64データを受け取るコールバック
+   */
+  const start = useCallback(
+    async (onChunk: (base64: string) => void) => {
+      setError(null);
+
+      const { granted } = await requestRecordingPermissionsAsync();
+      if (!granted) {
+        setError("マイクの使用許可が必要です");
+        return;
+      }
+
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+
+      callbackRef.current = onChunk;
+      shouldContinueRef.current = true;
+      setIsActive(true);
+
+      runChunkCycle();
+    },
+    [runChunkCycle]
+  );
+
+  /**
+   * チャンク録音を停止する
+   *
+   * 停止後、最後の部分チャンクもコールバックに送信される。
+   */
+  const stop = useCallback(async () => {
+    shouldContinueRef.current = false;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    try {
+      await recorder.stop();
+      const uri = recorder.uri;
+      if (uri && callbackRef.current) {
+        const base64 = await audioToBase64(uri);
+        callbackRef.current(base64);
+      }
+    } catch {
+      /* 停止時のエラーは無視 */
+    }
+
+    callbackRef.current = null;
+    setIsActive(false);
+  }, [recorder]);
+
+  return { isActive, error, start, stop };
+}

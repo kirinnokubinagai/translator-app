@@ -1,0 +1,14 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- waitForAnimationToEnd
+
+- tapOn: "履歴"
+- waitForAnimationToEnd
+
+# 空状態の確認
+- assertVisible: "履歴がありません"
+- assertVisible: "音声メモを録音すると、ここに翻訳履歴が表示されます"
+
+# クリアボタンは表示されないこと（メモがない状態）
+- assertNotVisible: "クリア"
