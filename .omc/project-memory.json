@@ -173,8 +173,8 @@
   "hotPaths": [
     {
       "path": "worker/src/index.ts",
-      "accessCount": 3,
-      "lastAccessed": 1774500406661,
+      "accessCount": 8,
+      "lastAccessed": 1774504013992,
       "type": "file"
     },
     {

@@ -5,12 +5,12 @@
 type Env = {
   RUNPOD_API_KEY: string;
   RUNPOD_WHISPER_ENDPOINT_ID: string;
-  RUNPOD_VLLM_ENDPOINT_ID: string;
+  RUNPOD_TRANSLATE_ENDPOINT_ID: string;
   APP_SECRET: string;
   ALLOWED_ORIGIN: string;
 };
 
-type EndpointType = "whisper" | "vllm";
+type EndpointType = "whisper" | "translate";
 
 function corsHeaders(origin: string): Record<string, string> {
   return {
@@ -39,7 +39,7 @@ function validateAppAuth(request: Request, env: Env): boolean {
 
 function getEndpointId(env: Env, type: EndpointType): string {
   if (type === "whisper") return env.RUNPOD_WHISPER_ENDPOINT_ID;
-  return env.RUNPOD_VLLM_ENDPOINT_ID;
+  return env.RUNPOD_TRANSLATE_ENDPOINT_ID;
 }
 
 export default {
@@ -136,6 +136,7 @@ async function handleTranscribe(
 
 /**
  * 翻訳ジョブ投入（非同期）
+ * カスタムTranslateGemmaワーカーを使用
  */
 async function handleTranslate(
   request: Request,
@@ -152,16 +153,7 @@ async function handleTranslate(
     return errorResponse("text, sourceLanguage, targetLanguageは必須です", 400, origin);
   }
 
-  const systemPrompt = [
-    "You are a professional interpreter.",
-    `Translate the following text from ${body.sourceLanguage} to ${body.targetLanguage}.`,
-    "Rules:",
-    "- Produce natural, fluent translations",
-    "- Preserve the tone and nuance of spoken language",
-    "- Return ONLY the translated text, no explanations or annotations",
-  ].join("\n");
-
-  const runpodUrl = `https://api.runpod.ai/v2/${env.RUNPOD_VLLM_ENDPOINT_ID}/run`;
+  const runpodUrl = `https://api.runpod.ai/v2/${env.RUNPOD_TRANSLATE_ENDPOINT_ID}/run`;
 
   const response = await fetch(runpodUrl, {
     method: "POST",
@@ -171,16 +163,9 @@ async function handleTranslate(
     },
     body: JSON.stringify({
       input: {
-        openai_route: "/v1/chat/completions",
-        openai_input: {
-          model: "google/translategemma-12b-it",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: body.text },
-          ],
-          temperature: 0.3,
-          max_tokens: 1024,
-        },
+        text: body.text,
+        source_language: body.sourceLanguage,
+        target_language: body.targetLanguage,
       },
     }),
   });
@@ -211,8 +196,8 @@ async function handleJobStatus(
   const endpointParam = url.searchParams.get("endpoint");
 
   if (!jobId) return errorResponse("ジョブIDが指定されていません", 400, origin);
-  if (endpointParam !== "whisper" && endpointParam !== "vllm") {
-    return errorResponse("endpointパラメータにwhisperまたはvllmを指定してください", 400, origin);
+  if (endpointParam !== "whisper" && endpointParam !== "translate") {
+    return errorResponse("endpointパラメータにwhisperまたはtranslateを指定してください", 400, origin);
   }
 
   const endpointId = getEndpointId(env, endpointParam);
