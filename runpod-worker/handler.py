@@ -9,7 +9,7 @@ import torch
 from transformers import AutoProcessor, Gemma3ForConditionalGeneration
 
 # モデルをグローバルに読み込み（コールドスタート時のみ）
-MODEL_ID = "google/translategemma-12b-it"
+MODEL_ID = "google/translategemma-4b-it"
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
 # Network Volumeを使う場合は /runpod-volume にマウント
