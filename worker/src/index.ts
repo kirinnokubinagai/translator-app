@@ -1514,7 +1514,7 @@ async function handleTranscribe(
     body: JSON.stringify({
       input: {
         audio_base64: body.audio_base64,
-        model: body.model ?? "medium",
+        model: body.model ?? "large-v3-turbo",
         language: body.language ?? null,
         transcription: "plain_text",
         translate: false,

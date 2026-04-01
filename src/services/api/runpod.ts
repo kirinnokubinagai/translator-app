@@ -37,7 +37,7 @@ export async function transcribeSync(
         body: JSON.stringify({
           audio_base64: audioBase64,
           language: language ?? undefined,
-          model: "medium",
+          model: "large-v3-turbo",
         }),
         timeout: 30000,
         retries: 0,
