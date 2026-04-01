@@ -1,7 +1,7 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, Animated, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Mic, Copy, Volume2, Check } from "lucide-react-native";
+import { Copy, Volume2, Check } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Crypto from "expo-crypto";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
@@ -9,13 +9,21 @@ import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useTranslation } from "@/hooks/use-translation";
 import { useSettingsStore } from "@/store/settings-store";
 import { useMemoStore } from "@/store/memo-store";
+import { useQuota } from "@/hooks/use-quota";
 import { LanguagePairSelector } from "@/components/ui/LanguagePairSelector";
 import { RecordButton } from "@/components/ui/RecordButton";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
 import { speak } from "@/services/api/tts";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
+import {
+  preloadRewardedAd,
+  showRewardedAd,
+  subscribeRewardedAdReady,
+} from "@/services/ads/rewarded-ad";
+import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
 import type { Memo } from "@/types/memo";
-import { useState } from "react";
 
 /** パルスアニメーションの最小透明度 */
 const PULSE_MIN_OPACITY = 0.3;
@@ -32,8 +40,17 @@ export default function MemoScreen() {
   const translation = useTranslation();
   const settings = useSettingsStore();
   const memoStore = useMemoStore();
+  const { canStartConversation, watchAdForQuota, syncBalance } = useQuota();
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [isAdReady, setIsAdReady] = useState(false);
+  const t = useT();
+
+  useEffect(() => {
+    preloadRewardedAd();
+    return subscribeRewardedAdReady(setIsAdReady);
+  }, []);
 
   const isProcessing = stt.isTranscribing || translation.isTranslating;
   const error = recorder.error ?? stt.error ?? translation.error;
@@ -101,12 +118,33 @@ export default function MemoScreen() {
       return;
     }
 
-    // 録音開始時にリセット
+    if (!canStartConversation) {
+      setShowQuotaModal(true);
+      return;
+    }
+
     stt.reset();
     translation.reset();
     setSaved(false);
     setCopied(false);
     await recorder.startRecord();
+  };
+
+  const handleWatchAdFromModal = async () => {
+    const nonceReady = await requestAdNonce();
+    if (!nonceReady) return;
+    const rewarded = await showRewardedAd();
+    if (!rewarded) {
+      consumeAdNonce();
+      return;
+    }
+
+    const nonce = consumeAdNonce();
+    if (!nonce) return;
+
+    await watchAdForQuota(nonce);
+    await syncBalance();
+    setShowQuotaModal(false);
   };
 
   const handleCopyTranslation = async () => {
@@ -143,6 +181,7 @@ export default function MemoScreen() {
           onSourceChange={settings.setSourceLanguage}
           onTargetChange={settings.setTargetLanguage}
           onSwap={settings.swapLanguages}
+          showSwap={false}
         />
       </View>
 
@@ -165,27 +204,25 @@ export default function MemoScreen() {
       >
         {/* 待機状態 */}
         {!recorder.isRecording && !isProcessing && !hasResult ? (
-          <View style={{ alignItems: "center", gap: THEME.spacing.md }}>
-            <View
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: THEME.colors.primaryLight,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Mic size={36} color={THEME.colors.primary} />
-            </View>
+          <View style={{ alignItems: "center", gap: THEME.spacing.sm }}>
             <Text
               style={{
-                fontSize: 16,
+                fontSize: 18,
+                fontWeight: "600",
+                color: THEME.colors.text,
+                textAlign: "center",
+              }}
+            >
+              {t("memo.title")}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
                 color: THEME.colors.textSecondary,
                 textAlign: "center",
               }}
             >
-              タップして録音
+              {t("memo.idleDescription")}
             </Text>
           </View>
         ) : null}
@@ -213,7 +250,7 @@ export default function MemoScreen() {
               {formatDuration(recorder.duration)}
             </Text>
             <Text style={{ fontSize: 14, color: THEME.colors.textSecondary }}>
-              タップして停止
+              {t("memo.tapToStop")}
             </Text>
           </View>
         ) : null}
@@ -229,7 +266,7 @@ export default function MemoScreen() {
                 color: THEME.colors.textSecondary,
               }}
             >
-              {stt.isTranscribing ? "音声認識中..." : "翻訳中..."}
+              {stt.isTranscribing ? t("memo.transcribing") : t("memo.translating")}
             </Text>
           </View>
         ) : null}
@@ -266,7 +303,7 @@ export default function MemoScreen() {
                     fontWeight: "600",
                   }}
                 >
-                  保存しました
+                  {t("common.saved")}
                 </Text>
               </View>
             ) : null}
@@ -281,7 +318,7 @@ export default function MemoScreen() {
                   fontWeight: "600",
                 }}
               >
-                原文
+                {t("common.original")}
               </Text>
               <Text style={{ fontSize: 15, color: THEME.colors.text, lineHeight: 22 }}>
                 {stt.transcribedText}
@@ -308,7 +345,7 @@ export default function MemoScreen() {
                     fontWeight: "600",
                   }}
                 >
-                  翻訳
+                  {t("common.translation")}
                 </Text>
                 <Text
                   style={{
@@ -352,7 +389,7 @@ export default function MemoScreen() {
                         fontWeight: "500",
                       }}
                     >
-                      再生
+                      {t("common.play")}
                     </Text>
                   </Pressable>
 
@@ -383,7 +420,7 @@ export default function MemoScreen() {
                         fontWeight: "500",
                       }}
                     >
-                      {copied ? "コピー済み" : "コピー"}
+                      {copied ? t("common.copied") : t("common.copy")}
                     </Text>
                   </Pressable>
                 </View>
@@ -408,13 +445,21 @@ export default function MemoScreen() {
           disabled={isProcessing}
           label={
             recorder.isRecording
-              ? "タップして停止"
+              ? t("memo.tapToStop")
               : isProcessing
-                ? "処理中..."
-                : "タップして録音"
+                ? t("common.processing")
+                : t("memo.tapToRecord")
           }
         />
       </View>
+
+      {/* クォータ不足モーダル */}
+      <QuotaEmptyModal
+        visible={showQuotaModal}
+        onClose={() => setShowQuotaModal(false)}
+        onWatchAd={handleWatchAdFromModal}
+        isAdReady={isAdReady}
+      />
     </SafeAreaView>
   );
 }

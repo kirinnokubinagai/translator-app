@@ -1,0 +1,21 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# メールログインテスト
+- tapOn: "メールアドレス"
+- inputText: "functest@example.com"
+
+- tapOn: "パスワード"
+- inputText: "Pass12345"
+
+# ログインボタンをタップ
+- tapOn:
+    text: "ログイン"
+    index: 1
+
+# 通訳画面に遷移する
+- extendedWaitUntil:
+    visible:
+      id: "record-button-speaker1"
+    timeout: 10000

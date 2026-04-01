@@ -1,34 +1,53 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
-  Animated,
   StyleSheet,
+  PanResponder,
+  LayoutChangeEvent,
+  Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Loader2 } from "lucide-react-native";
+import { Loader2, MessageCircle, Play } from "lucide-react-native";
 import { useConversation } from "@/hooks/use-conversation";
 import { useConversationStore } from "@/store/conversation-store";
+import { useQuota } from "@/hooks/use-quota";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { RecordButton } from "@/components/ui/RecordButton";
-import { getLanguageDisplayName } from "@/constants/languages";
+import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
 import { THEME } from "@/constants/theme";
 import { t } from "@/i18n";
 import type { Locale } from "@/i18n";
 import type { ConversationMessage } from "@/types/conversation";
+import {
+  preloadRewardedAd,
+  showRewardedAd,
+  subscribeRewardedAdReady,
+} from "@/services/ads/rewarded-ad";
+import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
+import { useT } from "@/i18n";
 
-/** パルスアニメーションの最小不透明度 */
-const PULSE_MIN_OPACITY = 0.3;
-/** パルスアニメーションの1サイクル時間（ミリ秒） */
-const PULSE_DURATION_MS = 800;
 /** 話者2エリアの背景色（淡い青みがかった白） */
 const SPEAKER2_BG = "#f0f9ff";
 /** 話者1エリアの背景色（暖かみのある白） */
 const SPEAKER1_BG = "#fafaf9";
 /** メッセージバブルの影色 */
 const BUBBLE_SHADOW = "#0c0a09";
+/** ドラッグ分割比率の最小値 */
+const SPLIT_RATIO_MIN = 0.2;
+/** ドラッグ分割比率の最大値 */
+const SPLIT_RATIO_MAX = 0.8;
+/** ドラッグ分割比率の初期値（50:50） */
+const SPLIT_RATIO_DEFAULT = 0.5;
+/** ドラッグハンドルの幅 */
+const DRAG_HANDLE_WIDTH = 40;
+/** ドラッグハンドルの高さ */
+const DRAG_HANDLE_HEIGHT = 4;
+/** 区切り線のタッチ領域の高さ */
+const DIVIDER_HIT_HEIGHT = 36;
 
 /**
  * 言語コードからUIロケールを導出する
@@ -58,11 +77,6 @@ function toLocale(language: string): Locale {
  * │                                    │
  * │ [マイク] 日本語 → 英語            │ ← 話者1の手元（下端）
  * └────────────────────────────────────┘
- *
- * 回転エリア（話者2）はコード順序が物理と逆になる:
- *   コード上部 = 言語選択（物理的に中央線近く）
- *   コード中部 = メッセージ
- *   コード下部 = マイク+言語ペア（物理的に上端＝話者2の手元）
  */
 export default function ConversationScreen() {
   const {
@@ -76,30 +90,77 @@ export default function ConversationScreen() {
   } = useConversation();
 
   const store = useConversationStore();
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const { canStartConversation, watchAdForQuota, syncBalance } = useQuota();
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [isAdReady, setIsAdReady] = useState(false);
+  const tl = useT();
+
+  /** スクロールビューのref（最新メッセージへの自動スクロール用） */
+  const scrollRef1 = useRef<ScrollView>(null);
+  const scrollRef2 = useRef<ScrollView>(null);
+
+  /** 話者エリアの分割比率（話者2側の割合） */
+  const [splitRatio, setSplitRatio] = useState(SPLIT_RATIO_DEFAULT);
+  /** 現在の分割比率をrefで保持（PanResponderのstale closure対策） */
+  const splitRatioRef = useRef(SPLIT_RATIO_DEFAULT);
+  /** コンテナ全体の高さをrefで保持（PanResponderのstale closure対策） */
+  const containerHeightRef = useRef(0);
+  /** ドラッグ開始時の分割比率を保持 */
+  const splitRatioAtDragStart = useRef(SPLIT_RATIO_DEFAULT);
+
+  /**
+   * コンテナのレイアウト変更時に高さを記録する
+   */
+  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
+    containerHeightRef.current = e.nativeEvent.layout.height;
+  }, []);
+
+  /** splitRatio変更時にrefも同期 */
+  useEffect(() => {
+    splitRatioRef.current = splitRatio;
+  }, [splitRatio]);
 
   useEffect(() => {
-    if (!isRecording) {
-      pulseAnim.setValue(1);
-      return;
-    }
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: PULSE_MIN_OPACITY,
-          duration: PULSE_DURATION_MS,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: PULSE_DURATION_MS,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [isRecording, pulseAnim]);
+    preloadRewardedAd();
+    return subscribeRewardedAdReady(setIsAdReady);
+  }, []);
+
+  /**
+   * 区切り線のドラッグで分割比率を変更するPanResponder
+   */
+  const dividerPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderGrant: () => {
+        splitRatioAtDragStart.current = splitRatioRef.current;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (containerHeightRef.current <= 0) return;
+        const newRatio = Math.max(
+          SPLIT_RATIO_MIN,
+          Math.min(
+            SPLIT_RATIO_MAX,
+            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current
+          )
+        );
+        setSplitRatio(newRatio);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (containerHeightRef.current <= 0) return;
+        const newRatio = Math.max(
+          SPLIT_RATIO_MIN,
+          Math.min(
+            SPLIT_RATIO_MAX,
+            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current
+          )
+        );
+        setSplitRatio(newRatio);
+      },
+    })
+  ).current;
 
   const handleSpeaker2Press = () => {
     if (isRecording && activeSpeaker === "speaker2") {
@@ -107,6 +168,10 @@ export default function ConversationScreen() {
       return;
     }
     if (isRecording) return;
+    if (!canStartConversation) {
+      setShowQuotaModal(true);
+      return;
+    }
     startSpeaking("speaker2");
   };
 
@@ -116,140 +181,250 @@ export default function ConversationScreen() {
       return;
     }
     if (isRecording) return;
+    if (!canStartConversation) {
+      setShowQuotaModal(true);
+      return;
+    }
     startSpeaking("speaker1");
   };
 
-  const sp1Msgs = messages.filter((m) => m.speaker === "speaker1");
-  const sp2Msgs = messages.filter((m) => m.speaker === "speaker2");
+  const handleWatchAdFromModal = async () => {
+    const nonceReady = await requestAdNonce();
+    if (!nonceReady) return;
+    const rewarded = await showRewardedAd();
+    if (!rewarded) {
+      consumeAdNonce();
+      return;
+    }
+
+    const nonce = consumeAdNonce();
+    if (!nonce) return;
+
+    await watchAdForQuota(nonce);
+    await syncBalance();
+    setShowQuotaModal(false);
+  };
+
+  /** 全メッセージをタイムスタンプ順にソート */
+  const allMsgsSorted = [...messages].sort((a, b) => a.timestamp - b.timestamp);
+
+  /**
+   * メッセージ追加時に両スクロールビューを最下部にスクロールする
+   */
+  useEffect(() => {
+    if (allMsgsSorted.length === 0) return;
+    const timer = setTimeout(() => {
+      scrollRef1.current?.scrollToEnd({ animated: true });
+      scrollRef2.current?.scrollToEnd({ animated: true });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [allMsgsSorted.length]);
 
   const isSpeaker1Recording = isRecording && activeSpeaker === "speaker1";
   const isSpeaker2Recording = isRecording && activeSpeaker === "speaker2";
-  const isSpeaker1Processing = isProcessing && activeSpeaker === "speaker1";
-  const isSpeaker2Processing = isProcessing && activeSpeaker === "speaker2";
 
   /** 話者ごとのUIロケール */
   const sp1Locale: Locale = toLocale(store.speaker1Language);
   const sp2Locale: Locale = toLocale(store.speaker2Language);
 
-  /** ローカライズされた言語ペア表示 */
-  const sp1LangPair = `${getLanguageDisplayName(store.speaker1Language, sp1Locale)} \u2192 ${getLanguageDisplayName(store.speaker2Language, sp1Locale)}`;
-  const sp2LangPair = `${getLanguageDisplayName(store.speaker2Language, sp2Locale)} \u2192 ${getLanguageDisplayName(store.speaker1Language, sp2Locale)}`;
-
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      {/* ===== エラーバナー ===== */}
-      {error ? (
-        <View style={styles.errorBannerTop}>
-          <ErrorBanner message={error} />
-        </View>
-      ) : null}
-
-      {/* ===== 話者2エリア（180度回転） ===== */}
-      {/* コード順序は物理と逆: 言語選択→メッセージ→マイク+言語ペア */}
-      <View style={[styles.speakerArea, styles.speaker2Area]}>
-        <View style={styles.speakerInner}>
-          {/* 言語選択（物理的に中央線近く） */}
-          <View style={styles.langSelectorRow}>
-            <LanguageSelector
-              value={store.speaker2Language}
-              onChange={(lang) => store.setSpeaker2Language(lang)}
-              style={styles.langSelectorCompact}
-            />
-          </View>
-
-          {/* メッセージエリア（話者1が話した内容の翻訳が表示される） */}
-          <ScrollView
-            style={styles.messageScroll}
-            contentContainerStyle={[
-              styles.messageScrollContent,
-              sp1Msgs.length === 0 && !isSpeaker2Recording && styles.messageScrollEmpty,
-            ]}
-          >
-            {sp1Msgs.length === 0 && !isSpeaker2Recording ? (
-              <EmptyHint text={t(sp2Locale, "conversation.emptyState")} />
-            ) : (
-              sp1Msgs.slice(-6).map((m) => (
-                <MessageBubble key={m.id} message={m} />
-              ))
-            )}
-          </ScrollView>
-
-          {/* マイク + 言語ペア（物理的に上端＝話者2の手元） */}
-          <View style={styles.micRow}>
-            <RecordButton
-              isRecording={isSpeaker2Recording}
-              onPress={handleSpeaker2Press}
-              disabled={isProcessing || (isRecording && !isSpeaker2Recording)}
-              size={72}
-            />
-            <View style={styles.micLabelBlock}>
-              <Text style={styles.micLangPairText}>{sp2LangPair}</Text>
-              <StatusLabel
-                isRecording={isSpeaker2Recording}
-                isProcessing={isSpeaker2Processing}
-                pulseAnim={pulseAnim}
-                recordingLabel={t(sp2Locale, "conversation.recording")}
-                processingLabel={t(sp2Locale, "conversation.translating")}
-                tapHint={t(sp2Locale, "conversation.startRecording")}
+      <View style={styles.container} onLayout={handleContainerLayout}>
+        {/* ===== 話者2エリア（180度回転） ===== */}
+        <View style={[styles.speakerArea, styles.speaker2Area, { flex: splitRatio }]}>
+          <View style={styles.speakerInner}>
+            {/* 言語選択（物理的に中央線近く＝コード上部） */}
+            <View style={styles.langSelectorRow}>
+              <LanguageSelector
+                value={store.speaker2Language}
+                onChange={(lang) => store.setSpeaker2Language(lang)}
+                style={styles.langSelectorCompact}
+                compact
               />
             </View>
+
+            {/* メッセージエリア */}
+            <ScrollView
+              ref={scrollRef2}
+              style={styles.messageScroll}
+              contentContainerStyle={[
+                styles.messageScrollContent,
+                allMsgsSorted.length === 0 && !isSpeaker2Recording && styles.messageScrollEmpty,
+              ]}
+            >
+              {allMsgsSorted.length === 0 && !isSpeaker2Recording ? (
+                <EmptyHint text={t(sp2Locale, "conversation.emptyState")} />
+              ) : (
+                allMsgsSorted.slice(-6).map((m) => (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    showOriginalAsMain={m.speaker === "speaker2"}
+                  />
+                ))
+              )}
+            </ScrollView>
+
+            {/* マイク（物理的に上端＝話者2の手元） */}
+            <View style={[styles.micRow, styles.micRowSpeaker2]}>
+              <RecordButton
+                isRecording={isSpeaker2Recording}
+                onPress={handleSpeaker2Press}
+                disabled={!isSpeaker2Recording && (isProcessing || isRecording)}
+                size={56}
+                testID="record-button-speaker2"
+              />
+              {isSpeaker2Recording && (
+                <Text style={styles.recordingLabel}>{tl("conversation.recording")}</Text>
+              )}
+            </View>
+
+            {/* エラーオーバーレイ（話者2用） */}
+            {error && activeSpeaker === "speaker2" ? (
+              <View style={styles.errorOverlay}>
+                <ErrorBanner
+                  message={error}
+                  onRetry={() => startSpeaking("speaker2")}
+                  onDismiss={() => {}}
+                />
+              </View>
+            ) : null}
+
+            {/* クォータ不足時のインライン広告ボタン（話者2用） */}
+            {error && error.toLowerCase().includes("quota") && activeSpeaker === "speaker2" && isAdReady ? (
+              <View style={styles.inlineAdButton}>
+                <Pressable
+                  onPress={handleWatchAdFromModal}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    paddingVertical: 8,
+                    paddingHorizontal: 16,
+                    borderRadius: THEME.borderRadius.sm,
+                    backgroundColor: pressed ? THEME.colors.primaryDark : THEME.colors.primary,
+                  })}
+                >
+                  <Play size={14} color="#ffffff" />
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: "#ffffff" }}>
+                    {tl("errors.watchAdToContinue")}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         </View>
-      </View>
 
-      {/* ===== 区切り線 ===== */}
-      <Divider isProcessing={isProcessing} />
-
-      {/* ===== 話者1エリア（正位置） ===== */}
-      {/* コード順序は物理と同じ: 言語選択→メッセージ→マイク+言語ペア */}
-      <View style={[styles.speakerArea, styles.speaker1Area]}>
-        {/* 言語選択（物理的に中央線近く） */}
-        <View style={styles.langSelectorRow}>
-          <LanguageSelector
-            value={store.speaker1Language}
-            onChange={(lang) => store.setSpeaker1Language(lang)}
-            style={styles.langSelectorCompact}
-          />
-        </View>
-
-        {/* メッセージエリア（話者2が話した内容の翻訳が表示される） */}
-        <ScrollView
-          style={styles.messageScroll}
-          contentContainerStyle={[
-            styles.messageScrollContent,
-            sp2Msgs.length === 0 && !isSpeaker1Recording && styles.messageScrollEmpty,
-          ]}
+        {/* ===== ドラッグ可能な区切り線 ===== */}
+        <View
+          {...dividerPanResponder.panHandlers}
+          style={styles.dividerTouchArea}
         >
-          {sp2Msgs.length === 0 && !isSpeaker1Recording ? (
-            <EmptyHint text={t(sp1Locale, "conversation.emptyState")} />
-          ) : (
-            sp2Msgs.slice(-6).map((m) => (
-              <MessageBubble key={m.id} message={m} />
-            ))
-          )}
-        </ScrollView>
+          <View style={styles.dividerLine}>
+            {isProcessing ? (
+              <View style={styles.dividerProcessing}>
+                <Loader2 size={10} color={THEME.colors.primary} />
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.dragHandle} />
+        </View>
 
-        {/* マイク + 言語ペア（物理的に下端＝話者1の手元） */}
-        <View style={styles.micRow}>
-          <RecordButton
-            isRecording={isSpeaker1Recording}
-            onPress={handleSpeaker1Press}
-            disabled={isProcessing || (isRecording && !isSpeaker1Recording)}
-            size={72}
-          />
-          <View style={styles.micLabelBlock}>
-            <Text style={styles.micLangPairText}>{sp1LangPair}</Text>
-            <StatusLabel
-              isRecording={isSpeaker1Recording}
-              isProcessing={isSpeaker1Processing}
-              pulseAnim={pulseAnim}
-              recordingLabel={t(sp1Locale, "conversation.recording")}
-              processingLabel={t(sp1Locale, "conversation.translating")}
-              tapHint={t(sp1Locale, "conversation.startRecording")}
-            />
+        {/* ===== 話者1エリア（正位置） ===== */}
+        <View style={[styles.speakerArea, styles.speaker1Area, { flex: 1 - splitRatio }]}>
+          <View style={styles.speakerInner}>
+            {/* 言語選択（物理的に中央線近く） */}
+            <View style={styles.langSelectorRow}>
+              <LanguageSelector
+                value={store.speaker1Language}
+                onChange={(lang) => store.setSpeaker1Language(lang)}
+                style={styles.langSelectorCompact}
+                compact
+              />
+            </View>
+
+            {/* メッセージエリア */}
+            <ScrollView
+              ref={scrollRef1}
+              style={styles.messageScroll}
+              contentContainerStyle={[
+                styles.messageScrollContent,
+                allMsgsSorted.length === 0 && !isSpeaker1Recording && styles.messageScrollEmpty,
+              ]}
+            >
+              {allMsgsSorted.length === 0 && !isSpeaker1Recording ? (
+                <EmptyHint text={t(sp1Locale, "conversation.emptyState")} />
+              ) : (
+                allMsgsSorted.slice(-6).map((m) => (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    showOriginalAsMain={m.speaker === "speaker1"}
+                  />
+                ))
+              )}
+            </ScrollView>
+
+            {/* マイク（物理的に下端＝話者1の手元） */}
+            <View style={styles.micRow}>
+              <RecordButton
+                isRecording={isSpeaker1Recording}
+                onPress={handleSpeaker1Press}
+                disabled={!isSpeaker1Recording && (isProcessing || isRecording)}
+                size={56}
+                testID="record-button-speaker1"
+              />
+              {isSpeaker1Recording && (
+                <Text style={styles.recordingLabel}>{tl("conversation.recording")}</Text>
+              )}
+            </View>
+
+            {/* エラーオーバーレイ（話者1用） */}
+            {error && activeSpeaker !== "speaker2" ? (
+              <View style={styles.errorOverlay}>
+                <ErrorBanner
+                  message={error}
+                  onRetry={() => startSpeaking("speaker1")}
+                  onDismiss={() => {}}
+                />
+              </View>
+            ) : null}
+
+            {/* クォータ不足時のインライン広告ボタン（話者1用） */}
+            {error && error.toLowerCase().includes("quota") && activeSpeaker !== "speaker2" && isAdReady ? (
+              <View style={styles.inlineAdButton}>
+                <Pressable
+                  onPress={handleWatchAdFromModal}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    paddingVertical: 8,
+                    paddingHorizontal: 16,
+                    borderRadius: THEME.borderRadius.sm,
+                    backgroundColor: pressed ? THEME.colors.primaryDark : THEME.colors.primary,
+                  })}
+                >
+                  <Play size={14} color="#ffffff" />
+                  <Text style={{ fontSize: 13, fontWeight: "600", color: "#ffffff" }}>
+                    {tl("errors.watchAdToContinue")}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
+
+      {/* ===== クォータ不足モーダル ===== */}
+      <QuotaEmptyModal
+        visible={showQuotaModal}
+        onClose={() => setShowQuotaModal(false)}
+        onWatchAd={handleWatchAdFromModal}
+        isAdReady={isAdReady}
+      />
     </SafeAreaView>
   );
 }
@@ -258,79 +433,62 @@ export default function ConversationScreen() {
 // サブコンポーネント
 // ─────────────────────────────────────────────────────────────
 
-type StatusLabelProps = {
-  isRecording: boolean;
-  isProcessing: boolean;
-  pulseAnim: Animated.Value;
-  recordingLabel: string;
-  processingLabel: string;
-  tapHint: string;
-};
-
 /**
- * 録音/翻訳中/タップヒントのステータスラベル
- */
-function StatusLabel({
-  isRecording,
-  isProcessing,
-  pulseAnim,
-  recordingLabel,
-  processingLabel,
-  tapHint,
-}: StatusLabelProps) {
-  if (isRecording) {
-    return (
-      <Animated.Text style={[styles.recordingLabel, { opacity: pulseAnim }]}>
-        {recordingLabel}
-      </Animated.Text>
-    );
-  }
-  if (isProcessing) {
-    return (
-      <View style={styles.translatingRow}>
-        <Loader2 size={10} color={THEME.colors.primary} />
-        <Text style={styles.translatingText}>{processingLabel}</Text>
-      </View>
-    );
-  }
-  return <Text style={styles.tapHint}>{tapHint}</Text>;
-}
-
-/**
- * 中央区切り線
- */
-function Divider({ isProcessing }: { isProcessing: boolean }) {
-  return (
-    <View style={styles.divider}>
-      {isProcessing ? (
-        <View style={styles.dividerProcessing}>
-          <Loader2 size={10} color={THEME.colors.primary} />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-/**
- * メッセージがない時の控えめなヒント表示
+ * メッセージがない時のヒント表示（アイコン + サブテキスト付き）
  */
 function EmptyHint({ text }: { text: string }) {
   return (
     <View style={styles.emptyHint}>
-      <Text style={styles.emptyHintText}>{text}</Text>
+      <MessageCircle size={32} color={THEME.colors.textMuted} />
+      <Text style={styles.emptyHintTitle}>{text}</Text>
+      <Text style={styles.emptyHintSub}>
+        {/* マイクボタンから録音してください */}
+      </Text>
     </View>
   );
 }
 
+type MessageBubbleProps = {
+  message: ConversationMessage;
+  /** trueのとき、originalTextをメインテキストとして表示する（話者自身の発言側） */
+  showOriginalAsMain: boolean;
+};
+
+/** 自分の発言バブル背景色 */
+const BUBBLE_MINE_BG = "#e0f2f1";
+/** 相手の発言バブル背景色 */
+const BUBBLE_THEIRS_BG = "#f5f5f4";
+
+/** メッセージバブルのフェードインアニメーション周期（ミリ秒） */
+const BUBBLE_FADE_DURATION_MS = 250;
+
 /**
- * 翻訳結果のメッセージバブル
+ * 翻訳結果のメッセージバブル（フェードインアニメーション付き）
  */
-function MessageBubble({ message }: { message: ConversationMessage }) {
+function MessageBubble({ message, showOriginalAsMain }: MessageBubbleProps) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const mainText = showOriginalAsMain ? message.originalText : message.translatedText;
+  const subText = showOriginalAsMain ? message.translatedText : message.originalText;
+  const isMine = showOriginalAsMain;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: BUBBLE_FADE_DURATION_MS,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   return (
-    <View style={styles.bubble}>
-      <Text style={styles.bubbleTranslated}>{message.translatedText}</Text>
-      <Text style={styles.bubbleOriginal}>{message.originalText}</Text>
-    </View>
+    <Animated.View
+      style={[
+        styles.bubble,
+        { backgroundColor: isMine ? BUBBLE_MINE_BG : BUBBLE_THEIRS_BG, opacity: fadeAnim },
+      ]}
+    >
+      <Text style={[styles.bubbleTranslated, isMine && { color: THEME.colors.primaryDark }]}>{mainText}</Text>
+      {subText ? <Text style={styles.bubbleOriginal}>{subText}</Text> : null}
+    </Animated.View>
   );
 }
 
@@ -344,14 +502,19 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.background,
   },
 
-  errorBannerTop: {
-    paddingHorizontal: THEME.spacing.md,
-    paddingTop: THEME.spacing.xs,
+  container: {
+    flex: 1,
   },
 
-  /* 話者エリア共通 */
+  errorOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+
   speakerArea: {
-    flex: 1,
     overflow: "hidden",
   },
   speaker2Area: {
@@ -364,81 +527,66 @@ const styles = StyleSheet.create({
   },
   speaker1Area: {
     backgroundColor: SPEAKER1_BG,
-    flexDirection: "column",
   },
 
-  /* 言語セレクター（コンパクト） */
   langSelectorRow: {
-    paddingHorizontal: THEME.spacing.md,
-    paddingVertical: THEME.spacing.xs,
+    paddingHorizontal: THEME.spacing.sm,
+    paddingVertical: 2,
   },
   langSelectorCompact: {
     flex: 0,
   },
 
-  /* メッセージスクロールエリア */
   messageScroll: {
     flex: 1,
-    paddingHorizontal: THEME.spacing.md,
+    paddingHorizontal: THEME.spacing.sm,
   },
   messageScrollContent: {
-    paddingVertical: THEME.spacing.xs,
-    gap: 6,
+    paddingVertical: 2,
+    gap: 4,
   },
   messageScrollEmpty: {
     flexGrow: 1,
     justifyContent: "center",
   },
 
-  /* マイク + 言語ペア行（横並び） */
   micRow: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
     paddingVertical: 8,
-    paddingHorizontal: THEME.spacing.md,
   },
-  micLabelBlock: {
-    gap: 2,
-  },
-  micLangPairText: {
-    fontSize: 13,
-    color: THEME.colors.text,
-    fontWeight: "600",
-    letterSpacing: 0.3,
+  micRowSpeaker2: {
+    paddingBottom: 16,
   },
 
-  /* ステータスラベル */
   recordingLabel: {
     fontSize: 11,
     color: THEME.colors.error,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  translatingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  translatingText: {
-    fontSize: 11,
-    color: THEME.colors.primary,
     fontWeight: "600",
-  },
-  tapHint: {
-    fontSize: 10,
-    color: THEME.colors.textMuted,
-    letterSpacing: 0.2,
+    marginTop: 2,
   },
 
-  /* 区切り線 */
-  divider: {
+  dividerTouchArea: {
+    height: DIVIDER_HIT_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    backgroundColor: "transparent",
+  },
+  dividerLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     height: 2,
     backgroundColor: THEME.colors.primary,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
+  },
+  dragHandle: {
+    width: DRAG_HANDLE_WIDTH,
+    height: DRAG_HANDLE_HEIGHT,
+    backgroundColor: THEME.colors.textMuted,
+    borderRadius: DRAG_HANDLE_HEIGHT / 2,
   },
   dividerProcessing: {
     flexDirection: "row",
@@ -453,22 +601,40 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
 
-  /* 空状態ヒント */
   emptyHint: {
     alignItems: "center",
     paddingVertical: THEME.spacing.md,
+    gap: 8,
+  },
+  emptyHintTitle: {
+    fontSize: 14,
+    color: THEME.colors.textMuted,
+    letterSpacing: 0.3,
+    fontWeight: "500",
+  },
+  emptyHintSub: {
+    fontSize: 11,
+    color: THEME.colors.textMuted,
+    textAlign: "center",
   },
   emptyHintText: {
-    fontSize: 13,
+    fontSize: 12,
     color: THEME.colors.textMuted,
     letterSpacing: 0.3,
   },
+  inlineAdButton: {
+    position: "absolute",
+    bottom: 60,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
+  },
 
-  /* メッセージバブル */
   bubble: {
     backgroundColor: THEME.colors.surface,
-    borderRadius: THEME.borderRadius.md,
-    padding: 10,
+    borderRadius: THEME.borderRadius.sm,
+    padding: 8,
     borderWidth: 1,
     borderColor: THEME.colors.border,
     shadowColor: BUBBLE_SHADOW,
@@ -478,15 +644,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   bubbleTranslated: {
-    fontSize: 15,
+    fontSize: 14,
     color: THEME.colors.text,
     fontWeight: "500",
-    lineHeight: 22,
+    lineHeight: 20,
   },
   bubbleOriginal: {
-    fontSize: 11,
+    fontSize: 10,
     color: THEME.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
+    marginTop: 2,
+    lineHeight: 14,
   },
 });

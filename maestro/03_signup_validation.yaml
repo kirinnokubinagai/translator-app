@@ -1,0 +1,16 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# サインアップバリデーションテスト
+- tapOn: "アカウントを作成"
+
+# パスワード短すぎ警告
+- tapOn: "パスワード（8文字以上）"
+- inputText: "short"
+- assertVisible: "パスワードは8文字以上で入力してください"
+
+# パスワードを正しい長さにすると警告消える
+- eraseText: 5
+- inputText: "ValidPass123"
+- assertNotVisible: "パスワードは8文字以上で入力してください"

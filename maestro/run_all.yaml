@@ -1,0 +1,12 @@
+appId: com.talkable.app
+---
+# 全テスト実行（各フロー内で clearState + launchApp を行う）
+- runFlow: 01_login_screen.yaml
+- runFlow: 02_signup_screen.yaml
+- runFlow: 03_signup_validation.yaml
+- runFlow: 05_tab_navigation.yaml
+- runFlow: 06_conversation_screen.yaml
+- runFlow: 07_email_signup.yaml
+- runFlow: 08_email_login.yaml
+- runFlow: 09_login_error.yaml
+- runFlow: 10_settings_screen.yaml

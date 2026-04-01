@@ -1,0 +1,11 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# ログイン画面の表示テスト
+- assertVisible: "ログイン"
+- assertVisible: "メールアドレス"
+- assertVisible: "パスワード"
+- assertVisible: "Googleでログイン"
+- assertVisible: "Appleでログイン"
+- assertVisible: "アカウントを作成"

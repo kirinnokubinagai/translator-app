@@ -1,0 +1,37 @@
+appId: com.talkable.app
+---
+# 全ページスクリーンショット（設定画面含む）
+
+# --- 既にログイン済みの状態から開始 ---
+
+# 1. 通訳画面
+- takeScreenshot: /tmp/pages/01_conversation
+
+# 2. 字幕タブ
+- tapOn:
+    point: "35%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/02_subtitles
+
+# 3. メモタブ
+- tapOn:
+    point: "55%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/03_memo
+
+# 4. 履歴タブ
+- tapOn:
+    point: "80%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/04_history
+
+# 5. 通訳に戻る
+- tapOn:
+    point: "12%,95%"
+- waitForAnimationToEnd
+
+# 6. 設定画面
+- tapOn:
+    point: "93%,6%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/05_settings

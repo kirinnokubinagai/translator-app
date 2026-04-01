@@ -1,0 +1,27 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# ログインしてタブ画面に遷移
+- runFlow: _login_flow.yaml
+
+# 通訳タブ（デフォルト）
+- assertVisible:
+    id: "record-button-speaker1"
+
+# 字幕タブに移動
+- tapOn: "字幕"
+- assertVisible: "字幕"
+
+# メモタブに移動
+- tapOn: "メモ"
+- assertVisible: "メモ"
+
+# 履歴タブに移動
+- tapOn: "履歴"
+- assertVisible: "履歴"
+
+# 通訳タブに戻る
+- tapOn: "通訳"
+- assertVisible:
+    id: "record-button-speaker1"

@@ -4,35 +4,62 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "test": "jest --testPathPattern='src/' --passWithNoTests",
+    "test:all": "jest --passWithNoTests"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg)"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/worker/"
+    ]
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@types/jest": "29.5.14",
     "expo": "~55.0.8",
+    "expo-apple-authentication": "~55.0.9",
     "expo-audio": "^55.0.9",
+    "expo-auth-session": "~55.0.10",
     "expo-clipboard": "^55.0.9",
     "expo-constants": "^55.0.9",
-    "expo-crypto": "^55.0.10",
+    "expo-crypto": "~55.0.10",
+    "expo-dev-client": "^55.0.18",
     "expo-file-system": "^55.0.11",
     "expo-haptics": "^55.0.9",
     "expo-linking": "^55.0.8",
     "expo-router": "^55.0.7",
+    "expo-secure-store": "~55.0.9",
     "expo-speech": "^55.0.9",
     "expo-status-bar": "~55.0.4",
+    "expo-web-browser": "~55.0.10",
+    "jest": "~29.7.0",
+    "jest-expo": "~55.0.11",
     "lucide-react-native": "^1.6.0",
     "nativewind": "^4.2.3",
     "react": "19.2.0",
     "react-dom": "^19.2.0",
     "react-native": "0.83.2",
     "react-native-gesture-handler": "^2.30.0",
+    "react-native-google-mobile-ads": "^16.3.1",
+    "react-native-purchases": "^9.14.0",
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
     "react-native-svg": "15.15.3",
     "react-native-worklets": "0.7.2",
     "tailwindcss": "^3.3.2",
+    "wrangler": "^4.78.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
@@ -40,5 +67,9 @@
     "@types/react": "~19.2.2",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "http-proxy-agent": "^7.0.0",
+    "@tootallnate/once": "^3.0.1"
+  }
 }

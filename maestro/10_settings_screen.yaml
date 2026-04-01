@@ -1,0 +1,12 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# ログインして設定画面に遷移
+- runFlow: _login_flow.yaml
+
+# 設定アイコンをタップ（ヘッダー右上）
+- tapOn:
+    id: "settings-button"
+
+- assertVisible: "設定"

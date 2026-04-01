@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { speak } from "@/services/api/tts";
 import { LANGUAGES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
 import type { Memo } from "@/types/memo";
 
 /**
@@ -23,16 +24,17 @@ import type { Memo } from "@/types/memo";
 export default function HistoryScreen() {
   const router = useRouter();
   const { memos, isLoading, loadMemos, clearMemos } = useMemoStore();
+  const t = useT();
 
   useEffect(() => {
     loadMemos();
   }, [loadMemos]);
 
   const handleClear = () => {
-    Alert.alert("確認", "すべての履歴を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
+    Alert.alert(t("common.confirm"), t("history.clearConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "削除",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () => clearMemos(),
       },
@@ -165,7 +167,7 @@ export default function HistoryScreen() {
               fontWeight: "500",
             }}
           >
-            再生
+            {t("common.play")}
           </Text>
         </Pressable>
       </View>
@@ -192,7 +194,7 @@ export default function HistoryScreen() {
                 fontSize: 14,
               }}
             >
-              クリア
+              {t("common.clear")}
             </Text>
           </Button>
         </View>
@@ -203,16 +205,20 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderMemo}
         contentContainerStyle={{ paddingVertical: THEME.spacing.sm, flexGrow: 1 }}
-        ListEmptyComponent={<HistoryEmptyState />}
+        ListEmptyComponent={<HistoryEmptyState t={t} />}
       />
     </SafeAreaView>
   );
 }
 
+type HistoryEmptyStateProps = {
+  t: (key: string, params?: Record<string, string | number>) => string;
+};
+
 /**
  * 履歴の空状態コンポーネント
  */
-function HistoryEmptyState() {
+function HistoryEmptyState({ t }: HistoryEmptyStateProps) {
   return (
     <View
       style={{
@@ -243,7 +249,7 @@ function HistoryEmptyState() {
           textAlign: "center",
         }}
       >
-        まだ翻訳がありません
+        {t("history.noHistory")}
       </Text>
       <Text
         style={{
@@ -253,7 +259,7 @@ function HistoryEmptyState() {
           lineHeight: 20,
         }}
       >
-        メモタブで録音すると{"\n"}ここに保存されます
+        {t("history.emptyDescription")}
       </Text>
       <View
         style={{
@@ -271,7 +277,7 @@ function HistoryEmptyState() {
       >
         <Mic size={16} color={THEME.colors.textMuted} />
         <Text style={{ fontSize: 13, color: THEME.colors.textMuted }}>
-          メモタブで録音してみましょう
+          {t("history.emptyHint")}
         </Text>
       </View>
     </View>

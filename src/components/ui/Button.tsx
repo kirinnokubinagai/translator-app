@@ -17,11 +17,11 @@ type ButtonProps = {
 };
 
 const VARIANT_STYLES: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: "#14b8a6", text: "#ffffff" },
-  secondary: { bg: "#f5f5f4", text: "#1c1917" },
-  outline: { bg: "transparent", text: "#14b8a6", border: "#14b8a6" },
-  ghost: { bg: "transparent", text: "#78716c" },
-  danger: { bg: "#ef4444", text: "#ffffff" },
+  primary: { bg: THEME.colors.primary, text: THEME.colors.surface },
+  secondary: { bg: THEME.colors.background, text: THEME.colors.text },
+  outline: { bg: "transparent", text: THEME.colors.primary, border: THEME.colors.primary },
+  ghost: { bg: "transparent", text: THEME.colors.textSecondary },
+  danger: { bg: THEME.colors.error, text: THEME.colors.surface },
 };
 
 const SIZE_STYLES: Record<ButtonSize, { paddingH: number; paddingV: number; fontSize: number }> = {

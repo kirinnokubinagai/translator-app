@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { View, Text, Pressable, Modal, FlatList } from "react-native";
-import { ArrowLeftRight, ChevronDown, Check } from "lucide-react-native";
+import { ArrowLeftRight, ArrowRight, ChevronDown, Check } from "lucide-react-native";
 import { LANGUAGES, LANGUAGE_CODES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
 import type { LanguageCode } from "@/types/language";
 
 type LanguagePairSelectorProps = {
@@ -11,6 +12,8 @@ type LanguagePairSelectorProps = {
   onSourceChange: (lang: LanguageCode) => void;
   onTargetChange: (lang: LanguageCode) => void;
   onSwap: () => void;
+  /** スワップボタンを表示するか（falseで一方向矢印のみ表示） */
+  showSwap?: boolean;
 };
 
 type PickerTarget = "source" | "target" | null;
@@ -25,8 +28,10 @@ export function LanguagePairSelector({
   onSourceChange,
   onTargetChange,
   onSwap,
+  showSwap = true,
 }: LanguagePairSelectorProps) {
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
+  const t = useT();
 
   const currentValue = pickerTarget === "source" ? sourceLanguage : targetLanguage;
   const handleSelect = (lang: LanguageCode) => {
@@ -70,18 +75,24 @@ export function LanguagePairSelector({
         <ChevronDown size={14} color={THEME.colors.textSecondary} />
       </Pressable>
 
-      {/* スワップボタン */}
-      <Pressable
-        onPress={onSwap}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        style={({ pressed }) => ({
-          padding: 6,
-          borderRadius: THEME.borderRadius.full,
-          backgroundColor: pressed ? THEME.colors.primaryLight : "transparent",
-        })}
-      >
-        <ArrowLeftRight size={18} color={THEME.colors.primary} />
-      </Pressable>
+      {/* スワップボタン or 一方向矢印 */}
+      {showSwap ? (
+        <Pressable
+          onPress={onSwap}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => ({
+            padding: 6,
+            borderRadius: THEME.borderRadius.full,
+            backgroundColor: pressed ? THEME.colors.primaryLight : "transparent",
+          })}
+        >
+          <ArrowLeftRight size={18} color={THEME.colors.primary} />
+        </Pressable>
+      ) : (
+        <View style={{ padding: 6 }}>
+          <ArrowRight size={18} color={THEME.colors.primary} />
+        </View>
+      )}
 
       {/* ターゲット言語ボタン */}
       <Pressable
@@ -133,7 +144,9 @@ export function LanguagePairSelector({
                 color: THEME.colors.text,
               }}
             >
-              {pickerTarget === "source" ? "入力言語を選択" : "翻訳言語を選択"}
+              {pickerTarget === "source"
+                ? t("languageSelector.selectSource")
+                : t("languageSelector.selectTarget")}
             </Text>
             <FlatList
               data={LANGUAGE_CODES}

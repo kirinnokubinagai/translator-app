@@ -1,0 +1,17 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# サインアップ画面の表示テスト
+- tapOn: "アカウントを作成"
+- assertVisible: "アカウント作成"
+- assertVisible: "名前"
+- assertVisible: "メールアドレス"
+- assertVisible: "パスワード（8文字以上）"
+- assertVisible: "Googleで作成"
+- assertVisible: "Appleで作成"
+- assertVisible: "ログインはこちら"
+
+# ログイン画面に戻れるか
+- tapOn: "ログインはこちら"
+- assertVisible: "ログイン"

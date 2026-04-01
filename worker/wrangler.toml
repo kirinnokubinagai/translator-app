@@ -1,10 +1,21 @@
 name = "translator-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
 
+# NOTE: CORS wildcard is acceptable here because this API is consumed by a
+# native mobile app (React Native / Expo). Native HTTP requests are not subject
+# to browser CORS restrictions, so the Origin header is informational only.
+# If a web client is added in the future, restrict this to the web origin.
+# TURSO_DB_URL, TURSO_AUTH_TOKEN, OAuth secrets は wrangler secret で管理
 [vars]
-ALLOWED_ORIGIN = "*"
+ALLOWED_ORIGIN = "translator-app://"
+DEV_MODE = "false"
 
-[[kv_namespaces]]
-binding = "AUDIO_STORE"
-id = "5762ca42485b4224a7bfc2d43722009b"
+[env.dev]
+name = "translator-api-dev"
+vars = { ALLOWED_ORIGIN = "*", DEV_MODE = "true" }
+
+[env.production]
+name = "translator-api"
+vars = { ALLOWED_ORIGIN = "translator-app://" }

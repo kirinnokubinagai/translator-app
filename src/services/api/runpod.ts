@@ -1,7 +1,8 @@
 import { apiRequest } from "./client";
+import { getAuthHeaders } from "./headers";
 import { SpeechRecognitionError } from "@/lib/error";
 import { logger } from "@/lib/logger";
-import { API_BASE_URL, APP_TOKEN } from "@/constants/api";
+import { API_BASE_URL } from "@/constants/api";
 
 /** Faster Whisperのrunsyncレスポンス */
 type WhisperSyncResponse = {
@@ -15,16 +16,6 @@ type WhisperSyncResponse = {
 };
 
 /**
- * Cloudflare Workerプロキシ用のリクエストヘッダーを生成する
- */
-function getHeaders(): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${APP_TOKEN}`,
-  };
-}
-
-/**
  * Cloudflare Worker経由で音声認識を実行する（runsync同期方式）
  *
  * @param audioBase64 - Base64エンコードされた音声データ
@@ -36,11 +27,13 @@ export async function transcribeSync(
   language?: string
 ): Promise<{ text: string; detectedLanguage: string }> {
   try {
+    const requestUrl = `${API_BASE_URL}/api/transcribe`;
+    const headers = await getAuthHeaders("POST", requestUrl);
     const response = await apiRequest<WhisperSyncResponse>(
-      `${API_BASE_URL}/api/transcribe`,
+      requestUrl,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify({
           audio_base64: audioBase64,
           language: language ?? undefined,
@@ -54,7 +47,6 @@ export async function transcribeSync(
     logger.debug("Faster Whisperレスポンス", {
       status: response.status,
       hasOutput: String(!!response.output),
-      transcription: response.output?.transcription ?? "(空)",
     });
 
     if (response.status === "FAILED") {

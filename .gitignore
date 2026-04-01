@@ -34,6 +34,11 @@ yarn-error.*
 .env
 .env.local
 .env*.local
+.env.development
+.env.production
+
+# EAS build config (contains secrets)
+eas.json
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +46,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# oh-my-claudecode state
+.omc/
+
+# grepai index
+.grepai/
+
+# serena state
+.serena/

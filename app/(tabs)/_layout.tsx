@@ -1,13 +1,16 @@
 import { Tabs, useRouter } from "expo-router";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { MessageSquare, Subtitles, Mic, History, Settings } from "lucide-react-native";
 import { THEME, TAB_BAR_HEIGHT } from "@/constants/theme";
+import { QuotaBadge } from "@/components/quota/QuotaBadge";
+import { useT } from "@/i18n";
 
 /**
  * タブレイアウト
  */
 export default function TabLayout() {
   const router = useRouter();
+  const t = useT();
 
   return (
     <Tabs
@@ -27,17 +30,15 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: "600",
         },
-      }}
-    >
-      <Tabs.Screen
-        name="conversation"
-        options={{
-          title: "通訳",
-          headerShown: true,
-          headerRight: () => (
+        headerRight: () => (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <QuotaBadge />
             <Pressable
               onPress={() => router.push("/settings")}
               hitSlop={8}
+              testID="settings-button"
+              accessibilityLabel={t("accessibility.settings")}
+              accessibilityRole="button"
               style={({ pressed }) => ({
                 marginRight: 16,
                 padding: 6,
@@ -47,7 +48,14 @@ export default function TabLayout() {
             >
               <Settings size={20} color={THEME.colors.textSecondary} />
             </Pressable>
-          ),
+          </View>
+        ),
+      }}
+    >
+      <Tabs.Screen
+        name="conversation"
+        options={{
+          title: t("tabs.conversation"),
           tabBarIcon: ({ color, size }) => (
             <MessageSquare size={size} color={color} />
           ),
@@ -56,7 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="subtitles"
         options={{
-          title: "字幕",
+          title: t("tabs.subtitles"),
           tabBarIcon: ({ color, size }) => (
             <Subtitles size={size} color={color} />
           ),
@@ -65,14 +73,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="memo"
         options={{
-          title: "メモ",
+          title: t("tabs.memo"),
           tabBarIcon: ({ color, size }) => <Mic size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: "履歴",
+          title: t("tabs.history"),
           tabBarIcon: ({ color, size }) => (
             <History size={size} color={color} />
           ),

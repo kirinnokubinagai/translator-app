@@ -1,0 +1,62 @@
+appId: com.talkable.app
+---
+# 全ページスクリーンショット取得
+
+# 1. 現在の画面
+- takeScreenshot: /tmp/pages/01_current
+
+# ログイン画面ならログインフローを実行
+- runFlow:
+    when:
+      visible: "メールアドレス"
+    file: _login_flow.yaml
+
+# 2. 通訳画面
+- assertVisible: "通訳"
+- takeScreenshot: /tmp/pages/04_conversation
+
+# 3. 字幕タブ
+- tapOn:
+    point: "35%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/05_subtitles
+
+# 4. メモタブ
+- tapOn:
+    point: "55%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/06_memo
+
+# 5. 履歴タブ
+- tapOn:
+    point: "80%,95%"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/07_history
+
+# 6. 設定画面（testIDでタップ）
+- tapOn:
+    point: "12%,95%"
+- waitForAnimationToEnd
+- tapOn:
+    id: "settings-button"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/08_settings
+
+# 7. ログアウトしてログイン/サインアップ画面をキャプチャ
+- scrollUntilVisible:
+    element: "ログアウト"
+    direction: DOWN
+- tapOn: "ログアウト"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/09_login
+
+# 8. サインアップ画面
+- runFlow:
+    when:
+      visible: "アカウント作成"
+    commands:
+      - tapOn: "アカウント作成"
+      - waitForAnimationToEnd
+      - takeScreenshot: /tmp/pages/10_signup
+      - back
+      - waitForAnimationToEnd

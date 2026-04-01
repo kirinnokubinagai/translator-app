@@ -4,6 +4,7 @@ import { Check, X, Loader2, Mic, RotateCcw } from "lucide-react-native";
 import { useDiagnosticRecorder } from "@/hooks/use-diagnostic-recorder";
 import { useConversationStore } from "@/store/conversation-store";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
 
 /**
  * パイプライン診断画面
@@ -15,6 +16,7 @@ export default function DiagnosticScreen() {
   const { steps, isRunning, result, startTest, reset } =
     useDiagnosticRecorder();
   const store = useConversationStore();
+  const t = useT();
 
   const handleStart = () => {
     startTest(store.speaker1Language, store.speaker2Language);
@@ -30,13 +32,12 @@ export default function DiagnosticScreen() {
         <Text
           style={{ fontSize: 20, fontWeight: "700", color: THEME.colors.text }}
         >
-          パイプライン診断
+          {t("diagnostic.title")}
         </Text>
         <Text
           style={{ fontSize: 14, color: THEME.colors.textSecondary, lineHeight: 20 }}
         >
-          録音→音声認識→翻訳の各ステップをテストします。{"\n"}
-          ボタンを押したら3秒間話してください。
+          {t("diagnostic.description")}
         </Text>
 
         {/* 言語情報 */}
@@ -52,7 +53,7 @@ export default function DiagnosticScreen() {
           <Text
             style={{ fontSize: 13, color: THEME.colors.textSecondary }}
           >
-            使用言語ペア（会話画面の設定を使用）
+            {t("diagnostic.languagePairInfo")}
           </Text>
           <Text
             style={{
@@ -93,10 +94,10 @@ export default function DiagnosticScreen() {
           )}
           <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
             {isRunning
-              ? "テスト中..."
+              ? t("diagnostic.testing")
               : hasAnyResult
-              ? "もう一度テスト"
-              : "診断を開始"}
+              ? t("diagnostic.retryTest")
+              : t("diagnostic.startTest")}
           </Text>
         </Pressable>
 
@@ -191,10 +192,10 @@ export default function DiagnosticScreen() {
                 color: THEME.colors.primaryDark,
               }}
             >
-              全ステップ成功
+              {t("diagnostic.allSuccess")}
             </Text>
             <Text style={{ fontSize: 14, color: THEME.colors.text }}>
-              原文: {result.originalText}
+              {t("diagnostic.originalLabel")}: {result.originalText}
             </Text>
             <Text
               style={{
@@ -203,7 +204,7 @@ export default function DiagnosticScreen() {
                 color: THEME.colors.primaryDark,
               }}
             >
-              翻訳: {result.translatedText}
+              {t("diagnostic.translationLabel")}: {result.translatedText}
             </Text>
           </View>
         ) : null}

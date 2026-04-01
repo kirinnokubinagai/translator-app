@@ -6,10 +6,10 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { audioToBase64 } from "@/services/audio/recorder";
+import { CHUNK_DURATION_MS } from "@/constants/audio";
 import { logger } from "@/lib/logger";
-
-/** チャンク録音間隔（ミリ秒） */
-const CHUNK_DURATION_MS = 5000;
+import { t } from "@/i18n";
+import { useSettingsStore } from "@/store/settings-store";
 
 type UseAudioChunkerReturn = {
   isActive: boolean;
@@ -59,7 +59,7 @@ export function useAudioChunker(): UseAudioChunkerReturn {
           const base64 = await audioToBase64(uri);
           callbackRef.current(base64);
         } catch (e) {
-          logger.warn("チャンクデータ読み取り失敗", {
+          logger.warn(t(useSettingsStore.getState().locale, "errors.chunkReadFailed"), {
             error: e instanceof Error ? e.message : String(e),
           });
         }
@@ -70,8 +70,14 @@ export function useAudioChunker(): UseAudioChunkerReturn {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logger.error("チャンクサイクルエラー", { error: msg });
-      setError(msg);
+      logger.error(t(useSettingsStore.getState().locale, "errors.chunkCycleError"), { error: msg });
+      // prepareToRecordAsync失敗など録音開始できない場合のユーザー向けメッセージ
+      const locale = useSettingsStore.getState().locale;
+      const userMsg =
+        msg.includes("prepare") || msg.includes("record")
+          ? t(locale, "errors.recordingRestart")
+          : msg;
+      setError(userMsg);
       shouldContinueRef.current = false;
       setIsActive(false);
     }
@@ -88,7 +94,7 @@ export function useAudioChunker(): UseAudioChunkerReturn {
 
       const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) {
-        setError("マイクの使用許可が必要です");
+        setError(t(useSettingsStore.getState().locale, "errors.microphonePermission"));
         return;
       }
 
@@ -109,7 +115,8 @@ export function useAudioChunker(): UseAudioChunkerReturn {
   /**
    * チャンク録音を停止する
    *
-   * 停止後、最後の部分チャンクもコールバックに送信される。
+   * チャンクサイクルの途中で止まった場合のみstop()を試みる。
+   * すでに最後のサイクルでstop()済みの場合はエラーを無視する。
    */
   const stop = useCallback(async () => {
     shouldContinueRef.current = false;
@@ -119,15 +126,12 @@ export function useAudioChunker(): UseAudioChunkerReturn {
       timeoutRef.current = null;
     }
 
+    // recorderがまだ録音中の可能性があるため試みるが、
+    // すでに停止済みの場合はエラーを無視する
     try {
       await recorder.stop();
-      const uri = recorder.uri;
-      if (uri && callbackRef.current) {
-        const base64 = await audioToBase64(uri);
-        callbackRef.current(base64);
-      }
     } catch {
-      /* 停止時のエラーは無視 */
+      /* 停止済みの場合のエラーは無視 */
     }
 
     callbackRef.current = null;

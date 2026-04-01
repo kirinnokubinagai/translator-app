@@ -3,8 +3,9 @@ import { useAudioChunker } from "./use-audio-chunker";
 import { transcribeSync } from "@/services/api/runpod";
 import { translateText } from "@/services/api/translator";
 import { useSettingsStore } from "@/store/settings-store";
+import { useQuotaStore } from "@/store/quota-store";
 import { logger } from "@/lib/logger";
-import { getErrorMessage } from "@/lib/error";
+import { ApiError, getErrorMessage } from "@/lib/error";
 
 /** 字幕の最大保持件数 */
 const MAX_SUBTITLE_LINES = 20;
@@ -35,6 +36,7 @@ type UseSubtitlesReturn = {
  */
 export function useSubtitles(): UseSubtitlesReturn {
   const chunker = useAudioChunker();
+  const quotaStore = useQuotaStore();
   const [subtitles, setSubtitles] = useState<SubtitleLine[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,9 @@ export function useSubtitles(): UseSubtitlesReturn {
   const settings = useSettingsStore();
   /** 処理中チャンク数を追跡する */
   const processingCountRef = useRef(0);
+  /** chunkerへの参照（クォータ不足時に停止するため） */
+  const chunkerRef = useRef(chunker);
+  chunkerRef.current = chunker;
 
   /**
    * 1チャンクを処理する（STT→翻訳→字幕追加）
@@ -75,7 +80,14 @@ export function useSubtitles(): UseSubtitlesReturn {
           ...prev.slice(-(MAX_SUBTITLE_LINES - 1)),
           line,
         ]);
+
+        // サーバーから最新クォータ残高を同期
+        await quotaStore.syncBalance();
       } catch (err) {
+        // クォータ不足エラーの場合はチャンカーを停止
+        if (err instanceof ApiError && err.errorCode === "QUOTA_INSUFFICIENT") {
+          await chunkerRef.current.stop();
+        }
         setError(getErrorMessage(err));
         logger.error("字幕チャンク処理エラー", {
           error: err instanceof Error ? err.message : String(err),
@@ -88,7 +100,7 @@ export function useSubtitles(): UseSubtitlesReturn {
         }
       }
     },
-    [settings.sourceLanguage, settings.targetLanguage]
+    [settings.sourceLanguage, settings.targetLanguage, quotaStore]
   );
 
   /**

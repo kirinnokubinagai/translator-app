@@ -4,34 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MessageSquare, Subtitles, Mic } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useSettingsStore } from "@/store/settings-store";
+import { useT } from "@/i18n";
 import { THEME } from "@/constants/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
-type Slide = {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-};
-
-/** スライドデータ */
-const SLIDES: Slide[] = [
-  {
-    icon: <MessageSquare size={72} color={THEME.colors.primary} />,
-    title: "対面通訳",
-    description: "2人が向かい合って会話。\n上半分は相手に見せます。",
-  },
-  {
-    icon: <Subtitles size={72} color={THEME.colors.primary} />,
-    title: "リアルタイム字幕",
-    description: "話した内容がリアルタイムで\n翻訳字幕として表示。",
-  },
-  {
-    icon: <Mic size={72} color={THEME.colors.primary} />,
-    title: "音声メモ",
-    description: "録音→翻訳→保存。\n後から確認できます。",
-  },
-];
 
 /** ドットインジケーター */
 function DotIndicator({ total, current }: { total: number; current: number }) {
@@ -63,8 +39,28 @@ export default function OnboardingScreen() {
   const setHasCompletedOnboarding = useSettingsStore(
     (s) => s.setHasCompletedOnboarding
   );
+  const t = useT();
 
-  const isLast = currentIndex === SLIDES.length - 1;
+  /** スライドデータ */
+  const slides = [
+    {
+      icon: <MessageSquare size={72} color={THEME.colors.primary} />,
+      title: t("onboarding.slide1Title"),
+      description: t("onboarding.slide1Description"),
+    },
+    {
+      icon: <Subtitles size={72} color={THEME.colors.primary} />,
+      title: t("onboarding.slide2Title"),
+      description: t("onboarding.slide2Description"),
+    },
+    {
+      icon: <Mic size={72} color={THEME.colors.primary} />,
+      title: t("onboarding.slide3Title"),
+      description: t("onboarding.slide3Description"),
+    },
+  ];
+
+  const isLast = currentIndex === slides.length - 1;
 
   const handleNext = () => {
     if (isLast) {
@@ -76,10 +72,10 @@ export default function OnboardingScreen() {
 
   const handleComplete = () => {
     setHasCompletedOnboarding(true);
-    router.replace("/(tabs)/conversation");
+    router.replace("/login");
   };
 
-  const slide = SLIDES[currentIndex];
+  const slide = slides[currentIndex];
 
   return (
     <SafeAreaView
@@ -98,7 +94,7 @@ export default function OnboardingScreen() {
                 color: THEME.colors.textSecondary,
               }}
             >
-              スキップ
+              {t("common.skip")}
             </Text>
           </Pressable>
         ) : (
@@ -162,7 +158,7 @@ export default function OnboardingScreen() {
           gap: THEME.spacing.lg,
         }}
       >
-        <DotIndicator total={SLIDES.length} current={currentIndex} />
+        <DotIndicator total={slides.length} current={currentIndex} />
 
         <Pressable
           onPress={handleNext}
@@ -181,7 +177,7 @@ export default function OnboardingScreen() {
               color: "#ffffff",
             }}
           >
-            {isLast ? "始める" : "次へ"}
+            {isLast ? t("common.start") : t("common.next")}
           </Text>
         </Pressable>
       </View>

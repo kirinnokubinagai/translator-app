@@ -1,0 +1,27 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# メールでアカウント作成テスト
+- tapOn: "アカウントを作成"
+
+# フォーム入力
+- tapOn: "名前"
+- inputText: "Maestroテスト"
+
+- tapOn: "メールアドレス"
+- inputText: "maestro.test.001@example.com"
+
+- tapOn: "パスワード（8文字以上）"
+- inputText: "TestPass12345"
+
+# 作成ボタンをタップ
+- tapOn:
+    text: "アカウントを作成"
+    index: 1
+
+# 通訳画面に遷移する（タブが表示される）
+- extendedWaitUntil:
+    visible:
+      id: "record-button-speaker1"
+    timeout: 10000

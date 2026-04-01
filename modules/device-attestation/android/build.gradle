@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+group = 'expo.modules.deviceattestation'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.deviceattestation"
+  compileSdkVersion safeExtGet("compileSdkVersion", 34)
+
+  defaultConfig {
+    minSdkVersion safeExtGet("minSdkVersion", 23)
+    targetSdkVersion safeExtGet("targetSdkVersion", 34)
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  implementation 'com.google.android.play:integrity:1.4.0'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
+}
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}

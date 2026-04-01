@@ -13,5 +13,10 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "worker/**",
+    "runpod-worker/**",
+    "node_modules"
   ]
 }

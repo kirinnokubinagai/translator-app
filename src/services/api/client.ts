@@ -57,10 +57,27 @@ export async function apiRequest<T>(
 
       if (!response.ok) {
         const errorBody = await response.text().catch(() => "");
+        let errorMessage = `APIリクエストが失敗しました: ${response.status}`;
+        let errorCode = "API_ERROR";
+        try {
+          const parsed = JSON.parse(errorBody) as {
+            error?: { code?: string; message?: string };
+            message?: string;
+          };
+          if (parsed?.error?.code) errorCode = parsed.error.code;
+          if (parsed?.error?.message) {
+            errorMessage = parsed.error.message;
+          } else if (parsed?.message) {
+            errorMessage = parsed.message;
+          }
+        } catch {
+          // JSONパース失敗時はデフォルトコードを使用
+        }
         throw new ApiError(
-          `APIリクエストが失敗しました: ${response.status}`,
+          errorMessage,
           response.status,
-          errorBody
+          errorBody,
+          errorCode
         );
       }
 

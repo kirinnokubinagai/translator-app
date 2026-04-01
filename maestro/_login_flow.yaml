@@ -1,0 +1,32 @@
+appId: com.talkable.app
+---
+# ログインフロー
+
+# 1. ログイン画面スクリーンショット
+- takeScreenshot: /tmp/pages/01_login
+
+# 2. サインアップ画面
+- tapOn: "アカウントを作成"
+- waitForAnimationToEnd
+- takeScreenshot: /tmp/pages/02_signup
+
+# 3. ログイン画面に戻る
+- tapOn: "ログインはこちら"
+- waitForAnimationToEnd
+
+# 4. メールログイン
+- tapOn: "メールアドレス"
+- inputText: "apptest@example.com"
+- hideKeyboard
+- tapOn: "パスワード"
+- inputText: "AppTest123"
+- hideKeyboard
+- takeScreenshot: /tmp/pages/03_login_filled
+
+# 5. ログインボタン
+- tapOn:
+    text: "ログイン"
+    index: 1
+- extendedWaitUntil:
+    visible: "字幕"
+    timeout: 15000

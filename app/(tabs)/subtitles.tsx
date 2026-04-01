@@ -1,13 +1,22 @@
-import { useRef, useEffect } from "react";
-import { View, Text, ScrollView, Animated } from "react-native";
+import { useRef, useEffect, useState } from "react";
+import { View, Text, ScrollView, Animated, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mic } from "lucide-react-native";
 import { useSubtitles } from "@/hooks/use-subtitles";
 import { useSettingsStore } from "@/store/settings-store";
+import { useQuota } from "@/hooks/use-quota";
 import { LanguagePairSelector } from "@/components/ui/LanguagePairSelector";
 import { RecordButton } from "@/components/ui/RecordButton";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
+import {
+  preloadRewardedAd,
+  showRewardedAd,
+  subscribeRewardedAdReady,
+} from "@/services/ads/rewarded-ad";
+import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
 
 /** 字幕フェードインアニメーションの周期（ミリ秒） */
 const FADE_IN_DURATION_MS = 300;
@@ -20,18 +29,48 @@ export default function SubtitlesScreen() {
   const { isListening, subtitles, error, startListening, stopListening } =
     useSubtitles();
   const settings = useSettingsStore();
+  const { canStartConversation, watchAdForQuota, syncBalance } = useQuota();
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [isAdReady, setIsAdReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const t = useT();
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [subtitles]);
+
+  useEffect(() => {
+    preloadRewardedAd();
+    return subscribeRewardedAdReady(setIsAdReady);
+  }, []);
 
   const handleToggle = () => {
     if (isListening) {
       stopListening();
       return;
     }
+    if (!canStartConversation) {
+      setShowQuotaModal(true);
+      return;
+    }
     startListening();
+  };
+
+  const handleWatchAdFromModal = async () => {
+    const nonceReady = await requestAdNonce();
+    if (!nonceReady) return;
+    const rewarded = await showRewardedAd();
+    if (!rewarded) {
+      consumeAdNonce();
+      return;
+    }
+
+    const nonce = consumeAdNonce();
+    if (!nonce) return;
+
+    await watchAdForQuota(nonce);
+    await syncBalance();
+    setShowQuotaModal(false);
   };
 
   const isDark = isListening;
@@ -58,6 +97,7 @@ export default function SubtitlesScreen() {
           onSourceChange={settings.setSourceLanguage}
           onTargetChange={settings.setTargetLanguage}
           onSwap={settings.swapLanguages}
+          showSwap={false}
         />
       </View>
 
@@ -79,7 +119,7 @@ export default function SubtitlesScreen() {
         }}
       >
         {subtitles.length === 0 ? (
-          <SubtitleIdleState isDark={isDark} isListening={isListening} />
+          <SubtitleIdleState isDark={isDark} isListening={isListening} t={t} />
         ) : (
           subtitles.map((line, index) => (
             <SubtitleLine
@@ -104,9 +144,17 @@ export default function SubtitlesScreen() {
           isRecording={isListening}
           onPress={handleToggle}
           size={70}
-          label={isListening ? "字幕を停止" : "タップして字幕を開始"}
+          label={isListening ? t("subtitles.stopListening") : t("subtitles.startListening")}
         />
       </View>
+
+      {/* クォータ不足モーダル */}
+      <QuotaEmptyModal
+        visible={showQuotaModal}
+        onClose={() => setShowQuotaModal(false)}
+        onWatchAd={handleWatchAdFromModal}
+        isAdReady={isAdReady}
+      />
     </SafeAreaView>
   );
 }
@@ -114,17 +162,88 @@ export default function SubtitlesScreen() {
 type SubtitleIdleStateProps = {
   isDark: boolean;
   isListening: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
+
+/** 波形アニメーションのバー数 */
+const WAVE_BAR_COUNT = 5;
+/** 波形アニメーションの周期（ミリ秒） */
+const WAVE_DURATION_MS = 600;
+
+/**
+ * リスニング中の波形アニメーション
+ */
+function WaveformAnimation() {
+  const anims = useRef(
+    Array.from({ length: WAVE_BAR_COUNT }, () => new Animated.Value(0.3))
+  ).current;
+
+  useEffect(() => {
+    const animations = anims.map((anim, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 100),
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: WAVE_DURATION_MS,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0.3,
+            duration: WAVE_DURATION_MS,
+            useNativeDriver: true,
+          }),
+        ])
+      )
+    );
+    animations.forEach((a) => a.start());
+
+    return () => {
+      animations.forEach((a) => a.stop());
+    };
+  }, [anims]);
+
+  return (
+    <View style={waveStyles.container}>
+      {anims.map((anim, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            waveStyles.bar,
+            { transform: [{ scaleY: anim }] },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+const waveStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    height: 32,
+  },
+  bar: {
+    width: 4,
+    height: 24,
+    borderRadius: 2,
+    backgroundColor: "rgba(250,250,249,0.4)",
+  },
+});
 
 /**
  * 字幕の初期状態表示
  */
-function SubtitleIdleState({ isDark, isListening }: SubtitleIdleStateProps) {
+function SubtitleIdleState({ isDark, isListening, t }: SubtitleIdleStateProps) {
   if (isListening) {
     return (
       <View style={{ alignItems: "center", gap: THEME.spacing.sm }}>
+        <WaveformAnimation />
         <Text style={{ fontSize: 16, color: "rgba(250,250,249,0.5)" }}>
-          音声を待っています...
+          {t("subtitles.waitingForAudio")}
         </Text>
       </View>
     );
@@ -141,7 +260,7 @@ function SubtitleIdleState({ isDark, isListening }: SubtitleIdleStateProps) {
           textAlign: "center",
         }}
       >
-        タップして字幕を開始
+        {t("subtitles.idleTitle")}
       </Text>
       <Text
         style={{
@@ -150,7 +269,7 @@ function SubtitleIdleState({ isDark, isListening }: SubtitleIdleStateProps) {
           textAlign: "center",
         }}
       >
-        リアルタイムで音声を認識し{"\n"}翻訳字幕を表示します
+        {t("subtitles.idleDescription")}
       </Text>
     </View>
   );

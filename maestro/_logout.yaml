@@ -1,0 +1,11 @@
+appId: com.talkable.app
+---
+# 設定画面からログアウト
+- tapOn:
+    id: "settings-button"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "ログアウト"
+    direction: DOWN
+- tapOn: "ログアウト"
+- waitForAnimationToEnd

@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, FlatList, type ViewStyle } from "react-na
 import { ChevronDown, Check } from "lucide-react-native";
 import { LANGUAGES, LANGUAGE_CODES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
 import type { LanguageCode } from "@/types/language";
 
 type LanguageSelectorProps = {
@@ -10,6 +11,8 @@ type LanguageSelectorProps = {
   onChange: (code: LanguageCode) => void;
   label?: string;
   style?: ViewStyle;
+  /** コンパクト表示（会話画面用：小さいフォント・パディング） */
+  compact?: boolean;
 };
 
 /**
@@ -20,9 +23,11 @@ export function LanguageSelector({
   onChange,
   label,
   style,
+  compact = false,
 }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selected = LANGUAGES[value];
+  const t = useT();
 
   return (
     <View style={style}>
@@ -39,6 +44,11 @@ export function LanguageSelector({
       ) : null}
       <Pressable
         onPress={() => setIsOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={t("accessibility.languageSelect", {
+          label: label ?? t("accessibility.selectLanguage"),
+          language: selected.nativeName,
+        })}
         style={{
           flexDirection: "row",
           alignItems: "center",
@@ -46,15 +56,15 @@ export function LanguageSelector({
           backgroundColor: THEME.colors.surface,
           borderWidth: 1,
           borderColor: THEME.colors.border,
-          borderRadius: THEME.borderRadius.md,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          borderRadius: compact ? THEME.borderRadius.sm : THEME.borderRadius.md,
+          paddingHorizontal: compact ? 10 : 16,
+          paddingVertical: compact ? 6 : 12,
         }}
       >
-        <Text style={{ fontSize: 16, color: THEME.colors.text }}>
+        <Text style={{ fontSize: compact ? 13 : 16, color: THEME.colors.text }}>
           {selected.nativeName}
         </Text>
-        <ChevronDown size={20} color={THEME.colors.textSecondary} />
+        <ChevronDown size={compact ? 14 : 20} color={THEME.colors.textSecondary} />
       </Pressable>
 
       <Modal visible={isOpen} transparent animationType="slide">
@@ -84,7 +94,7 @@ export function LanguageSelector({
                 color: THEME.colors.text,
               }}
             >
-              言語を選択
+              {t("languageSelector.selectLanguage")}
             </Text>
             <FlatList
               data={LANGUAGE_CODES}

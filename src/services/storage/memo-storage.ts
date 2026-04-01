@@ -5,6 +5,18 @@ import type { Memo } from "@/types/memo";
 /** メモ保存キー */
 const MEMO_STORAGE_KEY = "translator_memos";
 
+/** 書き込み排他制御用 */
+let writeLock: Promise<void> = Promise.resolve();
+
+/**
+ * 書き込み操作を直列化する
+ */
+function withWriteLock<T>(fn: () => Promise<T>): Promise<T> {
+  const next = writeLock.then(fn, fn);
+  writeLock = next.then(() => {}, () => {});
+  return next;
+}
+
 /**
  * すべてのメモを取得する
  */
@@ -26,35 +38,39 @@ export async function getAllMemos(): Promise<Memo[]> {
 /**
  * メモを保存する
  */
-export async function saveMemo(memo: Memo): Promise<void> {
-  try {
-    const memos = await getAllMemos();
-    memos.unshift(memo);
-    await AsyncStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
-    logger.debug("メモを保存しました", { id: memo.id });
-  } catch (error) {
-    logger.error("メモ保存エラー", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
+export function saveMemo(memo: Memo): Promise<void> {
+  return withWriteLock(async () => {
+    try {
+      const memos = await getAllMemos();
+      memos.unshift(memo);
+      await AsyncStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+      logger.debug("メモを保存しました", { id: memo.id });
+    } catch (error) {
+      logger.error("メモ保存エラー", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  });
 }
 
 /**
  * メモを削除する
  */
-export async function deleteMemo(id: string): Promise<void> {
-  try {
-    const memos = await getAllMemos();
-    const filtered = memos.filter((m) => m.id !== id);
-    await AsyncStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(filtered));
-    logger.debug("メモを削除しました", { id });
-  } catch (error) {
-    logger.error("メモ削除エラー", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
+export function deleteMemo(id: string): Promise<void> {
+  return withWriteLock(async () => {
+    try {
+      const memos = await getAllMemos();
+      const filtered = memos.filter((m) => m.id !== id);
+      await AsyncStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(filtered));
+      logger.debug("メモを削除しました", { id });
+    } catch (error) {
+      logger.error("メモ削除エラー", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  });
 }
 
 /**

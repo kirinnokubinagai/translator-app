@@ -1,0 +1,28 @@
+appId: com.talkable.app
+---
+- clearState
+- launchApp:
+    appId: com.talkable.app
+
+# Dev Client ランチャーが表示されるまで待つ
+- extendedWaitUntil:
+    visible: "Talkable"
+    timeout: 10000
+
+# Metro サーバー行をタップして接続
+- tapOn:
+    text: ".*192\\.168.*"
+    optional: true
+
+# アプリがロードされるまで待つ
+- extendedWaitUntil:
+    visible: "対面通訳"
+    timeout: 30000
+
+# オンボーディングを完了してログイン画面へ進む
+- tapOn: "次へ"
+- assertVisible: "リアルタイム字幕"
+- tapOn: "次へ"
+- assertVisible: "音声メモ"
+- tapOn: "始める"
+- assertVisible: "ログイン"

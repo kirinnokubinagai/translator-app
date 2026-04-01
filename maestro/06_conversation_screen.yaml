@@ -1,0 +1,15 @@
+appId: com.talkable.app
+---
+- runFlow: _open_login.yaml
+
+# ログインして通訳画面に遷移
+- runFlow: _login_flow.yaml
+
+# 言語セレクターが表示される
+- assertVisible: "日本語"
+
+# マイクボタンが表示される
+- assertVisible:
+    id: "record-button-speaker1"
+- assertVisible:
+    id: "record-button-speaker2"

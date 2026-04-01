@@ -10,6 +10,7 @@ import { speak } from "@/services/api/tts";
 import { Button } from "@/components/ui/Button";
 import { LANGUAGES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
 import type { Memo } from "@/types/memo";
 
 /**
@@ -20,6 +21,7 @@ export default function MemoDetailScreen() {
   const router = useRouter();
   const [memo, setMemo] = useState<Memo | null>(null);
   const { removeMemo } = useMemoStore();
+  const t = useT();
 
   useEffect(() => {
     if (!id) return;
@@ -37,17 +39,17 @@ export default function MemoDetailScreen() {
         }}
       >
         <Text style={{ color: THEME.colors.textSecondary }}>
-          メモが見つかりません
+          {t("memo.memoNotFound")}
         </Text>
       </SafeAreaView>
     );
   }
 
   const handleDelete = () => {
-    Alert.alert("確認", "このメモを削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
+    Alert.alert(t("common.confirm"), t("memo.deleteMemo"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "削除",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           await removeMemo(memo.id);
@@ -59,7 +61,7 @@ export default function MemoDetailScreen() {
 
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
-    Alert.alert("コピーしました");
+    Alert.alert(t("common.copyDone"));
   };
 
   const formatDate = (timestamp: number): string => {
@@ -92,7 +94,7 @@ export default function MemoDetailScreen() {
               color: THEME.colors.textSecondary,
             }}
           >
-            原文
+            {t("common.original")}
           </Text>
           <Text style={{ fontSize: 16, color: THEME.colors.text, lineHeight: 24 }}>
             {memo.originalText}
@@ -124,7 +126,7 @@ export default function MemoDetailScreen() {
               color: THEME.colors.primaryDark,
             }}
           >
-            翻訳
+            {t("common.translation")}
           </Text>
           <Text
             style={{
@@ -151,7 +153,7 @@ export default function MemoDetailScreen() {
         <Button variant="danger" onPress={handleDelete}>
           <Trash2 size={18} color="#ffffff" />
           <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "600" }}>
-            削除
+            {t("common.delete")}
           </Text>
         </Button>
       </ScrollView>

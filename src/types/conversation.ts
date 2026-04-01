@@ -11,11 +11,3 @@ export type ConversationMessage = {
   targetLanguage: LanguageCode;
   timestamp: number;
 };
-
-export type ConversationSession = {
-  id: string;
-  speaker1Language: LanguageCode;
-  speaker2Language: LanguageCode;
-  messages: ConversationMessage[];
-  createdAt: number;
-};

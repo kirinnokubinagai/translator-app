@@ -6,12 +6,10 @@ import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "@/constants/la
 type ConversationState = {
   messages: ConversationMessage[];
   activeSpeaker: Speaker;
-  isRecording: boolean;
   speaker1Language: LanguageCode;
   speaker2Language: LanguageCode;
   addMessage: (message: ConversationMessage) => void;
   setActiveSpeaker: (speaker: Speaker) => void;
-  setIsRecording: (recording: boolean) => void;
   setSpeaker1Language: (lang: LanguageCode) => void;
   setSpeaker2Language: (lang: LanguageCode) => void;
   clearMessages: () => void;
@@ -21,14 +19,12 @@ type ConversationState = {
 export const useConversationStore = create<ConversationState>((set) => ({
   messages: [],
   activeSpeaker: "speaker1",
-  isRecording: false,
   speaker1Language: DEFAULT_SOURCE_LANGUAGE,
   speaker2Language: DEFAULT_TARGET_LANGUAGE,
 
   addMessage: (message) =>
-    set((state) => ({ messages: [...state.messages, message] })),
+    set((state) => ({ messages: [...state.messages.slice(-99), message] })),
   setActiveSpeaker: (speaker) => set({ activeSpeaker: speaker }),
-  setIsRecording: (recording) => set({ isRecording: recording }),
   setSpeaker1Language: (lang) => set({ speaker1Language: lang }),
   setSpeaker2Language: (lang) => set({ speaker2Language: lang }),
   clearMessages: () => set({ messages: [] }),

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "即時通訳",
+    "name": "Talkable",
     "slug": "translator-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.translator.app",
+      "bundleIdentifier": "com.talkable.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "音声の録音と翻訳に使用します"
       }
@@ -26,16 +27,39 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.translator.app",
-      "permissions": ["RECORD_AUDIO"]
+      "package": "com.talkable.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "extra": {
+      "eas": {
+        "projectId": "3c165230-8e59-4cd4-a0cd-f5ae8971b156"
+      }
+    },
+    "owner": "kirinkubinagai",
     "plugins": [
       "expo-router",
-      ["expo-audio", { "microphonePermission": "音声の録音と翻訳に使用します" }]
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "音声の録音と翻訳に使用します"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      "expo-web-browser",
+      "expo-apple-authentication",
+      "expo-secure-store"
     ]
   }
 }

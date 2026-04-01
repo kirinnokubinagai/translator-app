@@ -1,31 +1,7 @@
 import { requestRecordingPermissionsAsync } from "expo-audio";
-import type { RecordingOptions } from "expo-audio";
 import * as FileSystem from "expo-file-system";
 import { RecordingError } from "@/lib/error";
 import { logger } from "@/lib/logger";
-
-/** 音声認識向け録音オプション（16kHz, モノラル） */
-export const SPEECH_RECORDING_OPTIONS: RecordingOptions = {
-  extension: ".m4a",
-  sampleRate: 16000,
-  numberOfChannels: 1,
-  bitRate: 128000,
-  android: {
-    outputFormat: "mpeg4",
-    audioEncoder: "aac",
-  },
-  ios: {
-    outputFormat: "aac ",
-    audioQuality: 127,
-    linearPCMBitDepth: 16,
-    linearPCMIsBigEndian: false,
-    linearPCMIsFloat: false,
-  },
-  web: {
-    mimeType: "audio/webm",
-    bitsPerSecond: 128000,
-  },
-};
 
 /**
  * マイクのパーミッションをリクエストする
