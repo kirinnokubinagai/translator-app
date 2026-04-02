@@ -1,6 +1,6 @@
+import { API_TIMEOUT_MS, MAX_RETRY_COUNT } from "@/constants/api";
 import { ApiError } from "@/lib/error";
 import { logger } from "@/lib/logger";
-import { MAX_RETRY_COUNT, API_TIMEOUT_MS } from "@/constants/api";
 
 type FetchOptions = {
   method?: "GET" | "POST";
@@ -12,10 +12,7 @@ type FetchOptions = {
 /**
  * タイムアウト付きfetch
  */
-async function fetchWithTimeout(
-  url: string,
-  options: FetchOptions
-): Promise<Response> {
+async function fetchWithTimeout(url: string, options: FetchOptions): Promise<Response> {
   const timeout = options.timeout ?? API_TIMEOUT_MS;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -47,7 +44,7 @@ function sleep(ms: number): Promise<void> {
  */
 export async function apiRequest<T>(
   url: string,
-  options: FetchOptions & { retries?: number } = {}
+  options: FetchOptions & { retries?: number } = {},
 ): Promise<T> {
   const maxRetries = options.retries ?? MAX_RETRY_COUNT;
 
@@ -73,12 +70,7 @@ export async function apiRequest<T>(
         } catch {
           // JSONパース失敗時はデフォルトコードを使用
         }
-        throw new ApiError(
-          errorMessage,
-          response.status,
-          errorBody,
-          errorCode
-        );
+        throw new ApiError(errorMessage, response.status, errorBody, errorCode);
       }
 
       const data = (await response.json()) as T;
@@ -99,7 +91,7 @@ export async function apiRequest<T>(
           : new ApiError("ネットワークエラーが発生しました", undefined, error);
       }
 
-      const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
+      const backoffMs = Math.min(1000 * 2 ** attempt, 10000);
       logger.warn("APIリトライ", {
         url,
         attempt: attempt.toString(),

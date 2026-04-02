@@ -1,24 +1,23 @@
+import { useRouter } from "expo-router";
+import { AlertCircle, Lock, Mail, User } from "lucide-react-native";
 import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
+  ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  ActivityIndicator,
-  Animated,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { Image } from "react-native";
-import { Mail, Lock, User, AlertCircle } from "lucide-react-native";
-import { useAuthStore } from "@/store/auth-store";
-import { THEME } from "@/constants/theme";
-import { GoogleIcon } from "@/components/ui/GoogleIcon";
 import { AppleIcon } from "@/components/ui/AppleIcon";
+import { GoogleIcon } from "@/components/ui/GoogleIcon";
+import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
+import { useAuthStore } from "@/store/auth-store";
 
 /** パスワード最小文字数 */
 const PASSWORD_MIN_LENGTH = 8;
@@ -37,9 +36,7 @@ export default function SignupScreen() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const isFormValid =
-    name.trim().length > 0 &&
-    email.trim().length > 0 &&
-    password.length >= PASSWORD_MIN_LENGTH;
+    name.trim().length > 0 && email.trim().length > 0 && password.length >= PASSWORD_MIN_LENGTH;
 
   /** 新規登録処理 */
   const handleSignup = async () => {
@@ -152,7 +149,10 @@ export default function SignupScreen() {
                 paddingHorizontal: 14,
               }}
             >
-              <User size={18} color={focusedField === "name" ? THEME.colors.primary : THEME.colors.textMuted} />
+              <User
+                size={18}
+                color={focusedField === "name" ? THEME.colors.primary : THEME.colors.textMuted}
+              />
               <TextInput
                 style={{
                   flex: 1,
@@ -187,7 +187,10 @@ export default function SignupScreen() {
                 paddingHorizontal: 14,
               }}
             >
-              <Mail size={18} color={focusedField === "email" ? THEME.colors.primary : THEME.colors.textMuted} />
+              <Mail
+                size={18}
+                color={focusedField === "email" ? THEME.colors.primary : THEME.colors.textMuted}
+              />
               <TextInput
                 style={{
                   flex: 1,
@@ -220,12 +223,18 @@ export default function SignupScreen() {
                   alignItems: "center",
                   backgroundColor: THEME.colors.surface,
                   borderWidth: focusedField === "password" ? 2 : 1,
-                  borderColor: focusedField === "password" ? THEME.colors.primary : THEME.colors.border,
+                  borderColor:
+                    focusedField === "password" ? THEME.colors.primary : THEME.colors.border,
                   borderRadius: THEME.borderRadius.md,
                   paddingHorizontal: 14,
                 }}
               >
-                <Lock size={18} color={focusedField === "password" ? THEME.colors.primary : THEME.colors.textMuted} />
+                <Lock
+                  size={18}
+                  color={
+                    focusedField === "password" ? THEME.colors.primary : THEME.colors.textMuted
+                  }
+                />
                 <TextInput
                   style={{
                     flex: 1,
@@ -278,9 +287,7 @@ export default function SignupScreen() {
             {isLoading ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
-              <Text
-                style={{ fontSize: 17, fontWeight: "600", color: "#ffffff" }}
-              >
+              <Text style={{ fontSize: 17, fontWeight: "600", color: "#ffffff" }}>
                 {t("auth.signup")}
               </Text>
             )}
@@ -295,9 +302,7 @@ export default function SignupScreen() {
             }}
           >
             <View style={{ flex: 1, height: 1, backgroundColor: THEME.colors.border }} />
-            <Text style={{ fontSize: 13, color: THEME.colors.textMuted }}>
-              {t("common.or")}
-            </Text>
+            <Text style={{ fontSize: 13, color: THEME.colors.textMuted }}>{t("common.or")}</Text>
             <View style={{ flex: 1, height: 1, backgroundColor: THEME.colors.border }} />
           </View>
 

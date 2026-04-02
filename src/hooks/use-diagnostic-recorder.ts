@@ -1,15 +1,15 @@
-import { useCallback, useState } from "react";
 import {
-  useAudioRecorder as useExpoAudioRecorder,
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
+  useAudioRecorder as useExpoAudioRecorder,
 } from "expo-audio";
-import { audioToBase64 } from "@/services/audio/recorder";
+import { useCallback, useState } from "react";
+import { useT } from "@/i18n";
+import { logger } from "@/lib/logger";
 import { transcribeSync } from "@/services/api/runpod";
 import { translateText } from "@/services/api/translator";
-import { logger } from "@/lib/logger";
-import { useT } from "@/i18n";
+import { audioToBase64 } from "@/services/audio/recorder";
 import type { LanguageCode } from "@/types/language";
 
 type StepStatus = "pending" | "running" | "success" | "error";
@@ -24,10 +24,7 @@ type UseDiagnosticReturn = {
   steps: DiagnosticStep[];
   isRunning: boolean;
   result: { originalText: string; translatedText: string } | null;
-  startTest: (
-    sourceLang: LanguageCode,
-    targetLang: LanguageCode
-  ) => Promise<void>;
+  startTest: (sourceLang: LanguageCode, targetLang: LanguageCode) => Promise<void>;
   reset: () => void;
 };
 
@@ -70,9 +67,7 @@ export function useDiagnosticRecorder(): UseDiagnosticReturn {
   const recorder = useExpoAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const updateStep = (index: number, status: StepStatus, detail: string) => {
-    setSteps((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, status, detail } : s))
-    );
+    setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, status, detail } : s)));
   };
 
   const startTest = useCallback(
@@ -147,11 +142,7 @@ export function useDiagnosticRecorder(): UseDiagnosticReturn {
       let base64: string;
       try {
         base64 = await audioToBase64(recorder.uri!);
-        updateStep(
-          3,
-          "success",
-          `${Math.round(base64.length / 1024)}KB`
-        );
+        updateStep(3, "success", `${Math.round(base64.length / 1024)}KB`);
       } catch (e) {
         updateStep(3, "error", e instanceof Error ? e.message : String(e));
         logger.error("Base64 conversion error", {
@@ -197,14 +188,19 @@ export function useDiagnosticRecorder(): UseDiagnosticReturn {
 
       setIsRunning(false);
     },
-    [recorder, t]
+    [
+      recorder,
+      t,
+      createInitialSteps, // Step 5: 翻訳送信
+      updateStep,
+    ],
   );
 
   const reset = useCallback(() => {
     setSteps(createInitialSteps());
     setResult(null);
     setIsRunning(false);
-  }, [t]);
+  }, [createInitialSteps]);
 
   return { steps, isRunning, result, startTest, reset };
 }

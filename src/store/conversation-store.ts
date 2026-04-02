@@ -1,7 +1,7 @@
 import { create } from "zustand";
+import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "@/constants/languages";
 import type { ConversationMessage, Speaker } from "@/types/conversation";
 import type { LanguageCode } from "@/types/language";
-import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "@/constants/languages";
 
 type ConversationState = {
   messages: ConversationMessage[];
@@ -22,8 +22,7 @@ export const useConversationStore = create<ConversationState>((set) => ({
   speaker1Language: DEFAULT_SOURCE_LANGUAGE,
   speaker2Language: DEFAULT_TARGET_LANGUAGE,
 
-  addMessage: (message) =>
-    set((state) => ({ messages: [...state.messages.slice(-99), message] })),
+  addMessage: (message) => set((state) => ({ messages: [...state.messages.slice(-99), message] })),
   setActiveSpeaker: (speaker) => set({ activeSpeaker: speaker }),
   setSpeaker1Language: (lang) => set({ speaker1Language: lang }),
   setSpeaker2Language: (lang) => set({ speaker2Language: lang }),

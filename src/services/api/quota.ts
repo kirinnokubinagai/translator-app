@@ -1,13 +1,13 @@
-import { apiRequest } from "./client";
-import { getAuthHeaders } from "./headers";
 import { API_BASE_URL } from "@/constants/api";
 import type {
-  QuotaInitResponse,
-  QuotaBalanceResponse,
   QuotaAddResponse,
-  QuotaPurchaseResponse,
+  QuotaBalanceResponse,
+  QuotaInitResponse,
   QuotaPackType,
+  QuotaPurchaseResponse,
 } from "@/types/quota";
+import { apiRequest } from "./client";
+import { getAuthHeaders } from "./headers";
 
 /** サーバー発行のnonce（広告表示前に取得） */
 let pendingAdNonce: string | null = null;
@@ -112,7 +112,7 @@ export async function purchaseQuota(
   pack: QuotaPackType,
   transactionId: string,
   productId?: string,
-  appUserId?: string
+  appUserId?: string,
 ): Promise<QuotaPurchaseResponse> {
   const requestUrl = `${API_BASE_URL}/api/quota/purchase`;
   const headers = await getAuthHeaders("POST", requestUrl);

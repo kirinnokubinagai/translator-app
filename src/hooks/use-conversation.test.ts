@@ -33,7 +33,7 @@ type ProcessedItem = {
  */
 async function drainQueueSimulation(
   queue: QueueItem[],
-  processDelay: number = 10
+  processDelay: number = 10,
 ): Promise<ProcessedItem[]> {
   const results: ProcessedItem[] = [];
 
@@ -60,7 +60,7 @@ function enqueueChunk(
   base64: string,
   speaker: "speaker1" | "speaker2",
   speaker1Language: string,
-  speaker2Language: string
+  speaker2Language: string,
 ): void {
   const sourceLanguage = speaker === "speaker1" ? speaker1Language : speaker2Language;
   const targetLanguage = speaker === "speaker1" ? speaker2Language : speaker1Language;

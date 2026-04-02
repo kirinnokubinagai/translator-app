@@ -1,28 +1,28 @@
-import { useRef, useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, Animated, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Copy, Volume2, Check } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Crypto from "expo-crypto";
-import { useAudioRecorder } from "@/hooks/use-audio-recorder";
-import { useSpeechToText } from "@/hooks/use-speech-to-text";
-import { useTranslation } from "@/hooks/use-translation";
-import { useSettingsStore } from "@/store/settings-store";
-import { useMemoStore } from "@/store/memo-store";
-import { useQuota } from "@/hooks/use-quota";
+import { Check, Copy, Volume2 } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { LanguagePairSelector } from "@/components/ui/LanguagePairSelector";
 import { RecordButton } from "@/components/ui/RecordButton";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
-import { speak } from "@/services/api/tts";
 import { THEME } from "@/constants/theme";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { useQuota } from "@/hooks/use-quota";
+import { useSpeechToText } from "@/hooks/use-speech-to-text";
+import { useTranslation } from "@/hooks/use-translation";
 import { useT } from "@/i18n";
 import {
   preloadRewardedAd,
   showRewardedAd,
   subscribeRewardedAdReady,
 } from "@/services/ads/rewarded-ad";
-import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
+import { consumeAdNonce, requestAdNonce } from "@/services/api/quota";
+import { speak } from "@/services/api/tts";
+import { useMemoStore } from "@/store/memo-store";
+import { useSettingsStore } from "@/store/settings-store";
 import type { Memo } from "@/types/memo";
 
 /** パルスアニメーションの最小透明度 */
@@ -75,7 +75,7 @@ export default function MemoScreen() {
           duration: PULSE_DURATION_MS,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     animation.start();
     return () => animation.stop();
@@ -86,16 +86,13 @@ export default function MemoScreen() {
       const result = await recorder.stopRecord();
       if (!result) return;
 
-      const sttResult = await stt.transcribe(
-        result.base64,
-        settings.sourceLanguage
-      );
+      const sttResult = await stt.transcribe(result.base64, settings.sourceLanguage);
       if (!sttResult) return;
 
       const translated = await translation.translate(
         sttResult.text,
         settings.sourceLanguage,
-        settings.targetLanguage
+        settings.targetLanguage,
       );
       if (!translated) return;
 

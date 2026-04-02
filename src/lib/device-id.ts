@@ -48,7 +48,9 @@ function getSecureStore(): typeof import("expo-secure-store") | null {
   try {
     // グローバルエラーハンドラーを一時退避（DevClientのオーバレイ表示を防ぐ）
     const g = globalThis as Record<string, unknown>;
-    const ErrorUtils = g.ErrorUtils as { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void } | undefined;
+    const ErrorUtils = g.ErrorUtils as
+      | { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void }
+      | undefined;
     const prevHandler = ErrorUtils?.getGlobalHandler();
     if (ErrorUtils) ErrorUtils.setGlobalHandler(() => {});
 
@@ -62,7 +64,9 @@ function getSecureStore(): typeof import("expo-secure-store") | null {
   } catch {
     // グローバルハンドラーを復元
     const g = globalThis as Record<string, unknown>;
-    const ErrorUtils = g.ErrorUtils as { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void } | undefined;
+    const ErrorUtils = g.ErrorUtils as
+      | { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void }
+      | undefined;
     if (ErrorUtils) {
       // prevHandlerが失われるのでデフォルトに戻す試みはしない（既に復元済みか例外パス）
     }

@@ -1,9 +1,9 @@
-import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAuthClient, getAuthUrl } from "./client";
+import { Platform } from "react-native";
 import { getDeviceId } from "@/lib/device-id";
 import { logger } from "@/lib/logger";
 import type { AuthUser, EmailLoginParams, EmailSignUpParams, SocialProvider } from "@/types/auth";
+import { getAuthClient, getAuthUrl } from "./client";
 
 /** AsyncStorageキー */
 const AUTH_USER_KEY = "translator_auth_user";
@@ -35,7 +35,9 @@ function getSecureStore(): typeof import("expo-secure-store") | null {
   try {
     // グローバルエラーハンドラーを一時退避（DevClientのオーバレイ表示を防ぐ）
     const g = globalThis as Record<string, unknown>;
-    const ErrorUtils = g.ErrorUtils as { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void } | undefined;
+    const ErrorUtils = g.ErrorUtils as
+      | { getGlobalHandler: () => unknown; setGlobalHandler: (h: unknown) => void }
+      | undefined;
     const prevHandler = ErrorUtils?.getGlobalHandler();
     if (ErrorUtils) ErrorUtils.setGlobalHandler(() => {});
 
@@ -281,7 +283,8 @@ async function signInWithOAuthBrowser(provider: SocialProvider): Promise<AuthUse
     }
 
     const url = new URL(result.url);
-    const sessionToken = url.searchParams.get("session_token") ?? url.hash?.replace("#session_token=", "");
+    const sessionToken =
+      url.searchParams.get("session_token") ?? url.hash?.replace("#session_token=", "");
 
     if (!sessionToken) {
       return fetchSessionAfterCallback(authUrl);
@@ -293,7 +296,9 @@ async function signInWithOAuthBrowser(provider: SocialProvider): Promise<AuthUse
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes("Cannot find native module")) {
       logger.error("Google/Appleログインにはdevelopment buildが必要です", { provider });
-      throw new Error("Google/Appleログインにはdevelopment buildが必要です。Expo Goでは利用できません。");
+      throw new Error(
+        "Google/Appleログインにはdevelopment buildが必要です。Expo Goでは利用できません。",
+      );
     }
     logger.error("OAuthブラウザログインエラー", { provider, error: message });
     return null;
@@ -307,7 +312,7 @@ async function signInWithOAuthBrowser(provider: SocialProvider): Promise<AuthUse
  * トークンがURLパラメータに含まれないことがある。
  * その場合はBetter Authクライアント経由でセッションを取得する。
  */
-async function fetchSessionAfterCallback(authUrl: string): Promise<AuthUser | null> {
+async function fetchSessionAfterCallback(_authUrl: string): Promise<AuthUser | null> {
   const client = getAuthClient();
   if (!client) return null;
 
@@ -341,7 +346,10 @@ async function fetchSessionAfterCallback(authUrl: string): Promise<AuthUser | nu
 /**
  * セッショントークンを使ってユーザー情報をサーバーから取得する
  */
-async function fetchUserFromSession(authUrl: string, sessionToken: string): Promise<AuthUser | null> {
+async function fetchUserFromSession(
+  authUrl: string,
+  sessionToken: string,
+): Promise<AuthUser | null> {
   try {
     const response = await fetch(`${authUrl}/api/auth/get-session`, {
       headers: {
@@ -354,7 +362,9 @@ async function fetchUserFromSession(authUrl: string, sessionToken: string): Prom
       return null;
     }
 
-    const data = await response.json() as { user?: { id: string; email: string; name: string | null; image?: string | null } };
+    const data = (await response.json()) as {
+      user?: { id: string; email: string; name: string | null; image?: string | null };
+    };
 
     if (!data.user) {
       logger.warn("セッションレスポンスにユーザー情報がありません");
@@ -429,7 +439,7 @@ async function signInWithAppleNative(): Promise<AuthUser | null> {
       return null;
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       user?: { id: string; email: string; name: string | null; image?: string | null };
       session?: { token?: string };
       token?: string;

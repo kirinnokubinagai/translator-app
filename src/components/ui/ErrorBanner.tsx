@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Animated } from "react-native";
-import { AlertCircle, X, WifiOff, Coins, RefreshCw } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { AlertCircle, Coins, RefreshCw, WifiOff, X } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, Text, View } from "react-native";
 import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
 
@@ -28,13 +28,23 @@ type ErrorBannerProps = {
  */
 function detectErrorType(message: string): ErrorType {
   const lower = message.toLowerCase();
-  if (lower.includes("network") || lower.includes("ネットワーク") || lower.includes("接続") || lower.includes("connection")) {
+  if (
+    lower.includes("network") ||
+    lower.includes("ネットワーク") ||
+    lower.includes("接続") ||
+    lower.includes("connection")
+  ) {
     return "network";
   }
   if (lower.includes("quota") || lower.includes("クォータ") || lower.includes("insufficient")) {
     return "quota";
   }
-  if (lower.includes("server") || lower.includes("サーバー") || lower.includes("500") || lower.includes("502")) {
+  if (
+    lower.includes("server") ||
+    lower.includes("サーバー") ||
+    lower.includes("500") ||
+    lower.includes("502")
+  ) {
     return "server";
   }
   return "generic";
@@ -63,9 +73,7 @@ export function ErrorBanner({ message, onDismiss, onRetry }: ErrorBannerProps) {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const errorType = detectErrorType(message);
   const critical = isCriticalError(message);
-  const [countdown, setCountdown] = useState(
-    errorType === "server" ? RETRY_COUNTDOWN_SEC : 0
-  );
+  const [countdown, setCountdown] = useState(errorType === "server" ? RETRY_COUNTDOWN_SEC : 0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -143,10 +151,7 @@ export function ErrorBanner({ message, onDismiss, onRetry }: ErrorBannerProps) {
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {renderIcon()}
-        <Text
-          style={{ flex: 1, fontSize: 14, color: textColor }}
-          numberOfLines={2}
-        >
+        <Text style={{ flex: 1, fontSize: 14, color: textColor }} numberOfLines={2}>
           {message}
         </Text>
         {onDismiss ? (

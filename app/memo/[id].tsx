@@ -1,16 +1,16 @@
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Volume2, Trash2, Copy } from "lucide-react-native";
 import * as Clipboard from "expo-clipboard";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Copy, Trash2, Volume2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { getMemoById } from "@/services/storage/memo-storage";
-import { useMemoStore } from "@/store/memo-store";
-import { speak } from "@/services/api/tts";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { LANGUAGES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
+import { speak } from "@/services/api/tts";
+import { getMemoById } from "@/services/storage/memo-storage";
+import { useMemoStore } from "@/store/memo-store";
 import type { Memo } from "@/types/memo";
 
 /**
@@ -38,9 +38,7 @@ export default function MemoDetailScreen() {
           backgroundColor: THEME.colors.background,
         }}
       >
-        <Text style={{ color: THEME.colors.textSecondary }}>
-          {t("memo.memoNotFound")}
-        </Text>
+        <Text style={{ color: THEME.colors.textSecondary }}>{t("memo.memoNotFound")}</Text>
       </SafeAreaView>
     );
   }
@@ -72,9 +70,8 @@ export default function MemoDetailScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: THEME.colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
         <Text style={{ fontSize: 12, color: THEME.colors.textSecondary }}>
-          {LANGUAGES[memo.sourceLanguage].nativeName} →{" "}
-          {LANGUAGES[memo.targetLanguage].nativeName} ・{" "}
-          {formatDate(memo.createdAt)}
+          {LANGUAGES[memo.sourceLanguage].nativeName} → {LANGUAGES[memo.targetLanguage].nativeName}{" "}
+          ・ {formatDate(memo.createdAt)}
         </Text>
 
         <View
@@ -100,9 +97,7 @@ export default function MemoDetailScreen() {
             {memo.originalText}
           </Text>
           <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
-            <Pressable
-              onPress={() => speak(memo.originalText, memo.sourceLanguage)}
-            >
+            <Pressable onPress={() => speak(memo.originalText, memo.sourceLanguage)}>
               <Volume2 size={20} color={THEME.colors.primary} />
             </Pressable>
             <Pressable onPress={() => handleCopy(memo.originalText)}>
@@ -139,9 +134,7 @@ export default function MemoDetailScreen() {
             {memo.translatedText}
           </Text>
           <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
-            <Pressable
-              onPress={() => speak(memo.translatedText, memo.targetLanguage)}
-            >
+            <Pressable onPress={() => speak(memo.translatedText, memo.targetLanguage)}>
               <Volume2 size={20} color={THEME.colors.primary} />
             </Pressable>
             <Pressable onPress={() => handleCopy(memo.translatedText)}>

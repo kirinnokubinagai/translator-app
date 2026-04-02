@@ -1,22 +1,22 @@
-import { useRef, useEffect, useState } from "react";
-import { View, Text, ScrollView, Animated, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Mic } from "lucide-react-native";
-import { useSubtitles } from "@/hooks/use-subtitles";
-import { useSettingsStore } from "@/store/settings-store";
-import { useQuota } from "@/hooks/use-quota";
+import { useEffect, useRef, useState } from "react";
+import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { LanguagePairSelector } from "@/components/ui/LanguagePairSelector";
 import { RecordButton } from "@/components/ui/RecordButton";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
 import { THEME } from "@/constants/theme";
+import { useQuota } from "@/hooks/use-quota";
+import { useSubtitles } from "@/hooks/use-subtitles";
 import { useT } from "@/i18n";
 import {
   preloadRewardedAd,
   showRewardedAd,
   subscribeRewardedAdReady,
 } from "@/services/ads/rewarded-ad";
-import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
+import { consumeAdNonce, requestAdNonce } from "@/services/api/quota";
+import { useSettingsStore } from "@/store/settings-store";
 
 /** 字幕フェードインアニメーションの周期（ミリ秒） */
 const FADE_IN_DURATION_MS = 300;
@@ -26,8 +26,7 @@ const FADE_IN_DURATION_MS = 300;
  * 暗い背景に字幕が下からストリームで表示される
  */
 export default function SubtitlesScreen() {
-  const { isListening, subtitles, error, startListening, stopListening } =
-    useSubtitles();
+  const { isListening, subtitles, error, startListening, stopListening } = useSubtitles();
   const settings = useSettingsStore();
   const { canStartConversation, watchAdForQuota, syncBalance } = useQuota();
   const [showQuotaModal, setShowQuotaModal] = useState(false);
@@ -37,7 +36,7 @@ export default function SubtitlesScreen() {
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
-  }, [subtitles]);
+  }, []);
 
   useEffect(() => {
     preloadRewardedAd();
@@ -79,9 +78,7 @@ export default function SubtitlesScreen() {
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: isDark
-          ? THEME.colors.subtitleBackground
-          : THEME.colors.background,
+        backgroundColor: isDark ? THEME.colors.subtitleBackground : THEME.colors.background,
       }}
     >
       {/* 言語ペアセレクター（上部） */}
@@ -175,7 +172,7 @@ const WAVE_DURATION_MS = 600;
  */
 function WaveformAnimation() {
   const anims = useRef(
-    Array.from({ length: WAVE_BAR_COUNT }, () => new Animated.Value(0.3))
+    Array.from({ length: WAVE_BAR_COUNT }, () => new Animated.Value(0.3)),
   ).current;
 
   useEffect(() => {
@@ -193,8 +190,8 @@ function WaveformAnimation() {
             duration: WAVE_DURATION_MS,
             useNativeDriver: true,
           }),
-        ])
-      )
+        ]),
+      ),
     );
     animations.forEach((a) => a.start());
 
@@ -206,13 +203,7 @@ function WaveformAnimation() {
   return (
     <View style={waveStyles.container}>
       {anims.map((anim, i) => (
-        <Animated.View
-          key={i}
-          style={[
-            waveStyles.bar,
-            { transform: [{ scaleY: anim }] },
-          ]}
-        />
+        <Animated.View key={i} style={[waveStyles.bar, { transform: [{ scaleY: anim }] }]} />
       ))}
     </View>
   );
@@ -237,7 +228,7 @@ const waveStyles = StyleSheet.create({
 /**
  * 字幕の初期状態表示
  */
-function SubtitleIdleState({ isDark, isListening, t }: SubtitleIdleStateProps) {
+function SubtitleIdleState({ isListening, t }: SubtitleIdleStateProps) {
   if (isListening) {
     return (
       <View style={{ alignItems: "center", gap: THEME.spacing.sm }}>
@@ -286,12 +277,7 @@ type SubtitleLineProps = {
  * 字幕1行コンポーネント
  * フェードインアニメーション付き
  */
-function SubtitleLine({
-  translatedText,
-  originalText,
-  isDark,
-  isLatest,
-}: SubtitleLineProps) {
+function SubtitleLine({ translatedText, originalText, isDark, isLatest }: SubtitleLineProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

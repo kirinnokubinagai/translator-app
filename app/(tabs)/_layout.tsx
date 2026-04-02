@@ -1,8 +1,8 @@
 import { Tabs, useRouter } from "expo-router";
+import { History, MessageSquare, Mic, Settings, Subtitles } from "lucide-react-native";
 import { Pressable, View } from "react-native";
-import { MessageSquare, Subtitles, Mic, History, Settings } from "lucide-react-native";
-import { THEME, TAB_BAR_HEIGHT } from "@/constants/theme";
 import { QuotaBadge } from "@/components/quota/QuotaBadge";
+import { TAB_BAR_HEIGHT, THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
 
 /**
@@ -56,18 +56,14 @@ export default function TabLayout() {
         name="conversation"
         options={{
           title: t("tabs.conversation"),
-          tabBarIcon: ({ color, size }) => (
-            <MessageSquare size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MessageSquare size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="subtitles"
         options={{
           title: t("tabs.subtitles"),
-          tabBarIcon: ({ color, size }) => (
-            <Subtitles size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Subtitles size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -81,9 +77,7 @@ export default function TabLayout() {
         name="history"
         options={{
           title: t("tabs.history"),
-          tabBarIcon: ({ color, size }) => (
-            <History size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
         }}
       />
     </Tabs>

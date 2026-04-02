@@ -1,7 +1,7 @@
-import { Pressable, Text, ActivityIndicator, type ViewStyle } from "react-native";
 import * as Haptics from "expo-haptics";
-import { useSettingsStore } from "@/store/settings-store";
+import { ActivityIndicator, Pressable, Text, type ViewStyle } from "react-native";
 import { THEME } from "@/constants/theme";
+import { useSettingsStore } from "@/store/settings-store";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
@@ -75,9 +75,7 @@ export function Button({
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color={variantStyle.text} />
-      ) : null}
+      {loading ? <ActivityIndicator size="small" color={variantStyle.text} /> : null}
       {typeof children === "string" ? (
         <Text
           style={{

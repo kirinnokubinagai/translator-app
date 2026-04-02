@@ -13,7 +13,10 @@ let writeLock: Promise<void> = Promise.resolve();
  */
 function withWriteLock<T>(fn: () => Promise<T>): Promise<T> {
   const next = writeLock.then(fn, fn);
-  writeLock = next.then(() => {}, () => {});
+  writeLock = next.then(
+    () => {},
+    () => {},
+  );
   return next;
 }
 

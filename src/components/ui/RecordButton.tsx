@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
-import { Pressable, View, Text, Animated } from "react-native";
-import { Mic, Square } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { useSettingsStore } from "@/store/settings-store";
-import { useT } from "@/i18n";
+import { Mic, Square } from "lucide-react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, Text, View } from "react-native";
 import { THEME } from "@/constants/theme";
+import { useT } from "@/i18n";
+import { useSettingsStore } from "@/store/settings-store";
 
 type RecordButtonProps = {
   isRecording: boolean;
@@ -50,7 +50,7 @@ export function RecordButton({
             duration: PULSE_DURATION_MS,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       pulseRef.current.start();
     }
@@ -73,9 +73,7 @@ export function RecordButton({
     if (disabled) return;
     if (hapticFeedback) {
       Haptics.impactAsync(
-        isRecording
-          ? Haptics.ImpactFeedbackStyle.Medium
-          : Haptics.ImpactFeedbackStyle.Heavy
+        isRecording ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Heavy,
       );
     }
     onPress();
@@ -95,7 +93,14 @@ export function RecordButton({
 
   return (
     <View style={{ alignItems: "center", gap: 8 }}>
-      <View style={{ width: size * 1.6, height: size * 1.6, alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          width: size * 1.6,
+          height: size * 1.6,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {/* パルスリング（録音中のみ表示） */}
         {isRecording ? (
           <Animated.View
@@ -117,7 +122,9 @@ export function RecordButton({
           disabled={disabled}
           testID={testID}
           accessibilityRole="button"
-          accessibilityLabel={isRecording ? t("accessibility.recordStop") : t("accessibility.recordStart")}
+          accessibilityLabel={
+            isRecording ? t("accessibility.recordStop") : t("accessibility.recordStart")
+          }
           accessibilityState={{ disabled }}
           style={({ pressed }) => ({
             width: size,
@@ -142,9 +149,7 @@ export function RecordButton({
         </Pressable>
       </View>
       {label ? (
-        <Text style={{ fontSize: 14, color: THEME.colors.textSecondary }}>
-          {label}
-        </Text>
+        <Text style={{ fontSize: 14, color: THEME.colors.textSecondary }}>{label}</Text>
       ) : null}
     </View>
   );

@@ -1,14 +1,9 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  initQuota,
-  fetchQuotaBalance,
-  addQuotaByAd,
-  purchaseQuota,
-} from "@/services/api/quota";
-import { logger } from "@/lib/logger";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { t } from "@/i18n";
+import { logger } from "@/lib/logger";
+import { addQuotaByAd, fetchQuotaBalance, initQuota, purchaseQuota } from "@/services/api/quota";
 import { useSettingsStore } from "@/store/settings-store";
 import type { QuotaPackType } from "@/types/quota";
 
@@ -31,7 +26,12 @@ type QuotaState = {
   earnByAd: (nonce: string) => Promise<boolean>;
 
   /** 課金パック購入 */
-  purchase: (pack: QuotaPackType, transactionId: string, productId?: string, appUserId?: string) => Promise<boolean>;
+  purchase: (
+    pack: QuotaPackType,
+    transactionId: string,
+    productId?: string,
+    appUserId?: string,
+  ) => Promise<boolean>;
 
   /** ローカル残高を即時減算（楽観的更新） */
   deductLocal: (amount: number) => void;
@@ -71,7 +71,10 @@ export const useQuotaStore = create<QuotaState>()(
             isNew: String(res.data.isNew),
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "errors.quotaInitFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "errors.quotaInitFailed");
           set({ isLoading: false, error: message });
           logger.error("クォータ初期化エラー", { error: message });
         }
@@ -105,7 +108,10 @@ export const useQuotaStore = create<QuotaState>()(
           logger.info("広告視聴クォータ追加", { added: String(res.data.added) });
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "errors.quotaAddFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "errors.quotaAddFailed");
           set({ isLoading: false, error: message });
           return false;
         }
@@ -126,7 +132,10 @@ export const useQuotaStore = create<QuotaState>()(
           });
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "errors.purchaseFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "errors.purchaseFailed");
           set({ isLoading: false, error: message });
           return false;
         }
@@ -151,6 +160,6 @@ export const useQuotaStore = create<QuotaState>()(
         totalConsumed: state.totalConsumed,
         isInitialized: state.isInitialized,
       }),
-    }
-  )
+    },
+  ),
 );

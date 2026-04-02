@@ -1,14 +1,14 @@
-import { useCallback, useState } from "react";
 import {
-  useAudioRecorder as useExpoAudioRecorder,
-  useAudioRecorderState,
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
+  useAudioRecorderState,
+  useAudioRecorder as useExpoAudioRecorder,
 } from "expo-audio";
-import { audioToBase64 } from "@/services/audio/recorder";
+import { useCallback, useState } from "react";
 import { getErrorMessage } from "@/lib/error";
 import { logger } from "@/lib/logger";
+import { audioToBase64 } from "@/services/audio/recorder";
 
 type UseAudioRecorderReturn = {
   isRecording: boolean;

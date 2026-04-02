@@ -2,12 +2,12 @@
  * クォータ定数のユニットテスト
  */
 import {
-  INITIAL_QUOTA,
   AD_REWARD_QUOTA,
-  TRANSCRIBE_COST,
-  TRANSLATE_COST,
+  INITIAL_QUOTA,
   QUOTA_LOW_THRESHOLD,
   QUOTA_PACKS,
+  TRANSCRIBE_COST,
+  TRANSLATE_COST,
 } from "./quota";
 
 describe("クォータ定数", () => {

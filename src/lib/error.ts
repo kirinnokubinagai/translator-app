@@ -1,12 +1,12 @@
-import { t } from "@/i18n";
 import type { Locale } from "@/i18n";
+import { t } from "@/i18n";
 
 /** アプリケーションエラーの基底クラス */
 export class AppError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly cause?: unknown
+    public readonly cause?: unknown,
   ) {
     super(message);
     this.name = "AppError";
@@ -19,7 +19,7 @@ export class ApiError extends AppError {
     message: string,
     public readonly statusCode?: number,
     cause?: unknown,
-    public readonly errorCode: string = "API_ERROR"
+    public readonly errorCode: string = "API_ERROR",
   ) {
     super(message, "API_ERROR", cause);
     this.name = "ApiError";

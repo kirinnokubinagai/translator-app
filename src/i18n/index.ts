@@ -1,5 +1,5 @@
-import { ja } from "./ja";
 import { en } from "./en";
+import { ja } from "./ja";
 
 /** 対応UIロケール */
 export type Locale = "ja" | "en";
@@ -17,11 +17,7 @@ const resources = { ja, en } as const;
  * @param key - ドット区切りのキー（例: "common.cancel"）
  * @param params - テンプレート変数（例: { amount: "5" }）
  */
-export function t(
-  locale: Locale,
-  key: string,
-  params?: Record<string, string | number>
-): string {
+export function t(locale: Locale, key: string, params?: Record<string, string | number>): string {
   const keys = key.split(".");
   let current: unknown = resources[locale];
 
@@ -40,9 +36,8 @@ export function t(
     return current;
   }
 
-  return current.replace(
-    /\{\{(\w+)\}\}/g,
-    (_, name: string) => String(params[name] ?? `{{${name}}}`)
+  return current.replace(/\{\{(\w+)\}\}/g, (_, name: string) =>
+    String(params[name] ?? `{{${name}}}`),
   );
 }
 
@@ -66,10 +61,9 @@ export function useT() {
 
   const locale = useSettingsStore((s: { locale: Locale }) => s.locale);
   return useCallback(
-    (key: string, params?: Record<string, string | number>) =>
-      t(locale, key, params),
-    [locale]
+    (key: string, params?: Record<string, string | number>) => t(locale, key, params),
+    [locale],
   );
 }
 
-export { ja, en };
+export { en, ja };

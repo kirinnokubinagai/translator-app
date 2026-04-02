@@ -1,15 +1,15 @@
-import { View, Text, ScrollView, Switch, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import Constants from "expo-constants";
-import { Activity, LogOut, User, Coins, Globe, ChevronRight } from "lucide-react-native";
-import { useSettingsStore } from "@/store/settings-store";
-import { useAuthStore } from "@/store/auth-store";
-import { useQuotaStore } from "@/store/quota-store";
+import { useRouter } from "expo-router";
+import { Activity, ChevronRight, Coins, Globe, LogOut, User } from "lucide-react-native";
+import { Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { THEME } from "@/constants/theme";
-import { useT } from "@/i18n";
 import type { Locale } from "@/i18n";
+import { useT } from "@/i18n";
+import { useAuthStore } from "@/store/auth-store";
+import { useQuotaStore } from "@/store/quota-store";
+import { useSettingsStore } from "@/store/settings-store";
 
 /** アプリバージョン（app.json / app.config.ts から取得） */
 const APP_VERSION = Constants.expoConfig?.version ?? "0.0.0";
@@ -192,7 +192,9 @@ export default function SettingsScreen() {
           <Pressable
             onPress={() => router.push("/quota")}
             accessibilityRole="button"
-            accessibilityLabel={t("quota.quotaAccessibilityLabel", { balance: String(quotaBalance) })}
+            accessibilityLabel={t("quota.quotaAccessibilityLabel", {
+              balance: String(quotaBalance),
+            })}
             style={({ pressed }) => ({
               flexDirection: "row",
               alignItems: "center",
@@ -210,9 +212,7 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: 16, color: THEME.colors.text }}>
                 {t("settings.quotaBalance")}: {quotaBalance}
               </Text>
-              <Text
-                style={{ fontSize: 13, color: THEME.colors.textSecondary }}
-              >
+              <Text style={{ fontSize: 13, color: THEME.colors.textSecondary }}>
                 {t("settings.quotaDescription")}
               </Text>
             </View>
@@ -249,9 +249,7 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: 16, color: THEME.colors.text }}>
                 {t("settings.pipelineDiagnostic")}
               </Text>
-              <Text
-                style={{ fontSize: 13, color: THEME.colors.textSecondary }}
-              >
+              <Text style={{ fontSize: 13, color: THEME.colors.textSecondary }}>
                 {t("settings.pipelineDiagnosticDescription")}
               </Text>
             </View>

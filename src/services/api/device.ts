@@ -1,14 +1,14 @@
-import { apiRequest } from "./client";
 import { API_BASE_URL } from "@/constants/api";
 import {
   getDeviceId,
   getDeviceSecret,
   isDeviceRegistered,
-  setDeviceRegistered,
   persistHmacKey,
+  setDeviceRegistered,
 } from "@/lib/device-id";
-import { generateAttestationPayload } from "@/services/attestation";
 import { logger } from "@/lib/logger";
+import { generateAttestationPayload } from "@/services/attestation";
+import { apiRequest } from "./client";
 
 /** デバイス登録レスポンス */
 type DeviceRegisterResponse = {
@@ -58,7 +58,7 @@ export async function registerDevice(): Promise<boolean> {
           attestation,
         }),
         retries: 2,
-      }
+      },
     );
 
     if (!response.success || !response.data?.hmacKey) {

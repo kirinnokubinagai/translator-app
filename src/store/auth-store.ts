@@ -1,19 +1,19 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { t } from "@/i18n";
+import { logger } from "@/lib/logger";
 import {
-  getStoredUser,
-  signInWithEmail,
-  signUpWithEmail,
-  signInWithSocial,
   signOut as authSignOut,
   getStoredSessionToken,
+  getStoredUser,
+  signInWithEmail,
+  signInWithSocial,
+  signUpWithEmail,
 } from "@/services/auth";
-import { clearAllMemos } from "@/services/storage/memo-storage";
 import { getAuthClient } from "@/services/auth/client";
-import { setRevenueCatUserId, logOutRevenueCat } from "@/services/purchases/revenuecat";
-import { logger } from "@/lib/logger";
-import { t } from "@/i18n";
+import { logOutRevenueCat, setRevenueCatUserId } from "@/services/purchases/revenuecat";
+import { clearAllMemos } from "@/services/storage/memo-storage";
 import { useSettingsStore } from "@/store/settings-store";
 import type { AuthUser, EmailLoginParams, EmailSignUpParams, SocialProvider } from "@/types/auth";
 
@@ -88,7 +88,10 @@ export const useAuthStore = create<AuthStoreState>()(
             isInitialized: true,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "auth.restoreFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "auth.restoreFailed");
           set({ isLoading: false, isInitialized: true, error: message });
           logger.error("認証初期化エラー", { error: message });
         }
@@ -99,7 +102,10 @@ export const useAuthStore = create<AuthStoreState>()(
         try {
           const user = await signInWithEmail(params);
           if (!user) {
-            set({ isLoading: false, error: t(useSettingsStore.getState().locale, "auth.loginFailed") });
+            set({
+              isLoading: false,
+              error: t(useSettingsStore.getState().locale, "auth.loginFailed"),
+            });
             return false;
           }
           await setRevenueCatUserId(user.id);
@@ -110,7 +116,10 @@ export const useAuthStore = create<AuthStoreState>()(
           });
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "auth.loginFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "auth.loginFailed");
           set({ isLoading: false, error: message });
           return false;
         }
@@ -121,7 +130,10 @@ export const useAuthStore = create<AuthStoreState>()(
         try {
           const user = await signUpWithEmail(params);
           if (!user) {
-            set({ isLoading: false, error: t(useSettingsStore.getState().locale, "auth.signupFailed") });
+            set({
+              isLoading: false,
+              error: t(useSettingsStore.getState().locale, "auth.signupFailed"),
+            });
             return false;
           }
           await setRevenueCatUserId(user.id);
@@ -132,7 +144,10 @@ export const useAuthStore = create<AuthStoreState>()(
           });
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "auth.signupFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "auth.signupFailed");
           set({ isLoading: false, error: message });
           return false;
         }
@@ -143,7 +158,10 @@ export const useAuthStore = create<AuthStoreState>()(
         try {
           const user = await signInWithSocial(provider);
           if (!user) {
-            set({ isLoading: false, error: t(useSettingsStore.getState().locale, "auth.socialLoginFailed") });
+            set({
+              isLoading: false,
+              error: t(useSettingsStore.getState().locale, "auth.socialLoginFailed"),
+            });
             return false;
           }
           await setRevenueCatUserId(user.id);
@@ -154,7 +172,10 @@ export const useAuthStore = create<AuthStoreState>()(
           });
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "auth.socialLoginFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "auth.socialLoginFailed");
           set({ isLoading: false, error: message });
           return false;
         }
@@ -169,7 +190,7 @@ export const useAuthStore = create<AuthStoreState>()(
           await clearAllMemos().catch((e) =>
             logger.warn("ログアウト時のメモ削除に失敗", {
               error: e instanceof Error ? e.message : String(e),
-            })
+            }),
           );
           set({
             user: null,
@@ -177,7 +198,10 @@ export const useAuthStore = create<AuthStoreState>()(
             isLoading: false,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : t(useSettingsStore.getState().locale, "auth.logoutFailed");
+          const message =
+            error instanceof Error
+              ? error.message
+              : t(useSettingsStore.getState().locale, "auth.logoutFailed");
           set({ isLoading: false, error: message });
           logger.error("ログアウトエラー", { error: message });
         }
@@ -192,6 +216,6 @@ export const useAuthStore = create<AuthStoreState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+    },
+  ),
 );

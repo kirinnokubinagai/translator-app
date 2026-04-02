@@ -2,12 +2,12 @@
  * エラーユーティリティのユニットテスト
  */
 import {
-  AppError,
   ApiError,
+  AppError,
+  getErrorMessage,
+  RecordingError,
   SpeechRecognitionError,
   TranslationError,
-  RecordingError,
-  getErrorMessage,
 } from "./error";
 
 describe("AppError", () => {
@@ -103,17 +103,23 @@ describe("getErrorMessage", () => {
 
   it("ApiError 500系はサーバーエラーメッセージを返すこと", () => {
     const error = new ApiError("APIエラーメッセージ", 500);
-    expect(getErrorMessage(error)).toBe("サーバーエラーが発生しました。しばらく待ってから再度お試しください。");
+    expect(getErrorMessage(error)).toBe(
+      "サーバーエラーが発生しました。しばらく待ってから再度お試しください。",
+    );
   });
 
   it("ApiError QUOTA_INSUFFICIENTはクォータ不足メッセージを返すこと", () => {
     const error = new ApiError("クォータ不足", 403, undefined, "QUOTA_INSUFFICIENT");
-    expect(getErrorMessage(error)).toBe("クォータが不足しています。広告を視聴するかクォータを購入してください。");
+    expect(getErrorMessage(error)).toBe(
+      "クォータが不足しています。広告を視聴するかクォータを購入してください。",
+    );
   });
 
   it("SpeechRecognitionErrorは音声認識メッセージを返すこと", () => {
     const error = new SpeechRecognitionError("音声認識失敗");
-    expect(getErrorMessage(error)).toBe("音声を認識できませんでした。もう一度はっきりと話してください。");
+    expect(getErrorMessage(error)).toBe(
+      "音声を認識できませんでした。もう一度はっきりと話してください。",
+    );
   });
 
   it("TranslationErrorは翻訳メッセージを返すこと", () => {
@@ -133,22 +139,32 @@ describe("getErrorMessage", () => {
 
   it("ネットワークエラーは接続メッセージを返すこと", () => {
     const error = new Error("Network request failed");
-    expect(getErrorMessage(error)).toBe("ネットワークに接続できません。通信環境を確認してください。");
+    expect(getErrorMessage(error)).toBe(
+      "ネットワークに接続できません。通信環境を確認してください。",
+    );
   });
 
   it("文字列を渡した場合デフォルトメッセージを返すこと", () => {
-    expect(getErrorMessage("文字列エラー")).toBe("予期しないエラーが発生しました。アプリを再起動してください。");
+    expect(getErrorMessage("文字列エラー")).toBe(
+      "予期しないエラーが発生しました。アプリを再起動してください。",
+    );
   });
 
   it("nullを渡した場合デフォルトメッセージを返すこと", () => {
-    expect(getErrorMessage(null)).toBe("予期しないエラーが発生しました。アプリを再起動してください。");
+    expect(getErrorMessage(null)).toBe(
+      "予期しないエラーが発生しました。アプリを再起動してください。",
+    );
   });
 
   it("undefinedを渡した場合デフォルトメッセージを返すこと", () => {
-    expect(getErrorMessage(undefined)).toBe("予期しないエラーが発生しました。アプリを再起動してください。");
+    expect(getErrorMessage(undefined)).toBe(
+      "予期しないエラーが発生しました。アプリを再起動してください。",
+    );
   });
 
   it("数値を渡した場合デフォルトメッセージを返すこと", () => {
-    expect(getErrorMessage(42)).toBe("予期しないエラーが発生しました。アプリを再起動してください。");
+    expect(getErrorMessage(42)).toBe(
+      "予期しないエラーが発生しました。アプリを再起動してください。",
+    );
   });
 });

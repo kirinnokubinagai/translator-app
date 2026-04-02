@@ -8,7 +8,18 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --testPathPattern='src/' --passWithNoTests",
-    "test:all": "jest --passWithNoTests"
+    "test:all": "jest --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint ./src ./app",
+    "format": "biome format --write ./src ./app",
+    "check": "biome check ./src ./app",
+    "check:fix": "biome check --write ./src ./app",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "jest": {
     "preset": "jest-expo",
@@ -64,7 +75,10 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
     "@types/react": "~19.2.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "~5.9.2"
   },
   "private": true,

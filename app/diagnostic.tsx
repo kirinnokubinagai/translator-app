@@ -1,10 +1,10 @@
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { Check, Loader2, Mic, RotateCcw, X } from "lucide-react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, X, Loader2, Mic, RotateCcw } from "lucide-react-native";
-import { useDiagnosticRecorder } from "@/hooks/use-diagnostic-recorder";
-import { useConversationStore } from "@/store/conversation-store";
 import { THEME } from "@/constants/theme";
+import { useDiagnosticRecorder } from "@/hooks/use-diagnostic-recorder";
 import { useT } from "@/i18n";
+import { useConversationStore } from "@/store/conversation-store";
 
 /**
  * パイプライン診断画面
@@ -13,8 +13,7 @@ import { useT } from "@/i18n";
  * どのステップで失敗するかを視覚的に表示する。
  */
 export default function DiagnosticScreen() {
-  const { steps, isRunning, result, startTest, reset } =
-    useDiagnosticRecorder();
+  const { steps, isRunning, result, startTest, reset } = useDiagnosticRecorder();
   const store = useConversationStore();
   const t = useT();
 
@@ -25,18 +24,12 @@ export default function DiagnosticScreen() {
   const hasAnyResult = steps.some((s) => s.status !== "pending");
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: THEME.colors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: THEME.colors.background }}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <Text
-          style={{ fontSize: 20, fontWeight: "700", color: THEME.colors.text }}
-        >
+        <Text style={{ fontSize: 20, fontWeight: "700", color: THEME.colors.text }}>
           {t("diagnostic.title")}
         </Text>
-        <Text
-          style={{ fontSize: 14, color: THEME.colors.textSecondary, lineHeight: 20 }}
-        >
+        <Text style={{ fontSize: 14, color: THEME.colors.textSecondary, lineHeight: 20 }}>
           {t("diagnostic.description")}
         </Text>
 
@@ -50,9 +43,7 @@ export default function DiagnosticScreen() {
             borderColor: THEME.colors.border,
           }}
         >
-          <Text
-            style={{ fontSize: 13, color: THEME.colors.textSecondary }}
-          >
+          <Text style={{ fontSize: 13, color: THEME.colors.textSecondary }}>
             {t("diagnostic.languagePairInfo")}
           </Text>
           <Text
@@ -69,13 +60,9 @@ export default function DiagnosticScreen() {
 
         {/* 開始/リセットボタン */}
         <Pressable
-          onPress={
-            isRunning ? undefined : hasAnyResult ? reset : handleStart
-          }
+          onPress={isRunning ? undefined : hasAnyResult ? reset : handleStart}
           style={({ pressed }) => ({
-            backgroundColor: isRunning
-              ? THEME.colors.textMuted
-              : THEME.colors.primary,
+            backgroundColor: isRunning ? THEME.colors.textMuted : THEME.colors.primary,
             paddingVertical: 16,
             borderRadius: THEME.borderRadius.md,
             alignItems: "center" as const,
@@ -96,8 +83,8 @@ export default function DiagnosticScreen() {
             {isRunning
               ? t("diagnostic.testing")
               : hasAnyResult
-              ? t("diagnostic.retryTest")
-              : t("diagnostic.startTest")}
+                ? t("diagnostic.retryTest")
+                : t("diagnostic.startTest")}
           </Text>
         </Pressable>
 
@@ -117,8 +104,8 @@ export default function DiagnosticScreen() {
                 step.status === "error"
                   ? THEME.colors.error
                   : step.status === "success"
-                  ? THEME.colors.success
-                  : THEME.colors.border,
+                    ? THEME.colors.success
+                    : THEME.colors.border,
             }}
           >
             {/* ステータスアイコン */}
@@ -148,10 +135,7 @@ export default function DiagnosticScreen() {
                 style={{
                   fontSize: 15,
                   fontWeight: "600",
-                  color:
-                    step.status === "error"
-                      ? THEME.colors.error
-                      : THEME.colors.text,
+                  color: step.status === "error" ? THEME.colors.error : THEME.colors.text,
                 }}
               >
                 {`${i + 1}. ${step.label}`}
@@ -161,9 +145,7 @@ export default function DiagnosticScreen() {
                   style={{
                     fontSize: 13,
                     color:
-                      step.status === "error"
-                        ? THEME.colors.error
-                        : THEME.colors.textSecondary,
+                      step.status === "error" ? THEME.colors.error : THEME.colors.textSecondary,
                     marginTop: 4,
                     lineHeight: 18,
                   }}

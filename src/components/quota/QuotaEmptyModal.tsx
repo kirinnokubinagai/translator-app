@@ -1,8 +1,8 @@
-import { Modal, View, Text, Pressable } from "react-native";
-import { Coins, Play, ShoppingCart, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { THEME } from "@/constants/theme";
+import { Coins, Play, ShoppingCart, X } from "lucide-react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { AD_REWARD_QUOTA } from "@/constants/quota";
+import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
 
 type QuotaEmptyModalProps = {
@@ -15,22 +15,12 @@ type QuotaEmptyModalProps = {
 /**
  * クォータ不足時のモーダル
  */
-export function QuotaEmptyModal({
-  visible,
-  onClose,
-  onWatchAd,
-  isAdReady,
-}: QuotaEmptyModalProps) {
+export function QuotaEmptyModal({ visible, onClose, onWatchAd, isAdReady }: QuotaEmptyModalProps) {
   const router = useRouter();
   const t = useT();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View
         style={{
           flex: 1,

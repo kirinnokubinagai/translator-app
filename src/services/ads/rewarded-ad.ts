@@ -100,7 +100,10 @@ export async function showRewardedAd(): Promise<boolean> {
   }
 
   return new Promise((resolve) => {
-    const ad = rewardedAd as { addAdEventListener: (type: string, cb: () => void) => () => void; show: () => void };
+    const ad = rewardedAd as {
+      addAdEventListener: (type: string, cb: () => void) => () => void;
+      show: () => void;
+    };
     let rewarded = false;
 
     const earnedListener = ad.addAdEventListener(
@@ -108,19 +111,16 @@ export async function showRewardedAd(): Promise<boolean> {
       () => {
         rewarded = true;
         logger.info("リワード広告報酬獲得");
-      }
+      },
     );
 
-    const closedListener = ad.addAdEventListener(
-      AdModule!.AdEventType.CLOSED,
-      () => {
-        earnedListener();
-        closedListener();
-        setAdReady(false);
-        preloadRewardedAd();
-        resolve(rewarded);
-      }
-    );
+    const closedListener = ad.addAdEventListener(AdModule!.AdEventType.CLOSED, () => {
+      earnedListener();
+      closedListener();
+      setAdReady(false);
+      preloadRewardedAd();
+      resolve(rewarded);
+    });
 
     ad.show();
   });
@@ -133,9 +133,7 @@ export function isRewardedAdReady(): boolean {
   return isAdLoaded;
 }
 
-export function subscribeRewardedAdReady(
-  listener: (ready: boolean) => void
-): () => void {
+export function subscribeRewardedAdReady(listener: (ready: boolean) => void): () => void {
   readyListeners.add(listener);
   listener(isAdLoaded);
   return () => {

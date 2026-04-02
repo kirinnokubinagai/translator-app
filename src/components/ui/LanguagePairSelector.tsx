@@ -1,7 +1,7 @@
+import { ArrowLeftRight, ArrowRight, Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
-import { View, Text, Pressable, Modal, FlatList } from "react-native";
-import { ArrowLeftRight, ArrowRight, ChevronDown, Check } from "lucide-react-native";
-import { LANGUAGES, LANGUAGE_CODES } from "@/constants/languages";
+import { FlatList, Modal, Pressable, Text, View } from "react-native";
+import { LANGUAGE_CODES, LANGUAGES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
 import type { LanguageCode } from "@/types/language";
@@ -163,9 +163,7 @@ export function LanguagePairSelector({
                       justifyContent: "space-between",
                       paddingHorizontal: 20,
                       paddingVertical: 14,
-                      backgroundColor: isSelected
-                        ? THEME.colors.primaryLight
-                        : "transparent",
+                      backgroundColor: isSelected ? THEME.colors.primaryLight : "transparent",
                     }}
                   >
                     <View>
@@ -188,9 +186,7 @@ export function LanguagePairSelector({
                         {lang.name}
                       </Text>
                     </View>
-                    {isSelected ? (
-                      <Check size={20} color={THEME.colors.primary} />
-                    ) : null}
+                    {isSelected ? <Check size={20} color={THEME.colors.primary} /> : null}
                   </Pressable>
                 );
               }}

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import type { EmailLoginParams, EmailSignUpParams, SocialProvider } from "@/types/auth";
 
@@ -30,7 +30,7 @@ export function useAuth() {
     async (params: EmailLoginParams): Promise<boolean> => {
       return loginWithEmail(params);
     },
-    [loginWithEmail]
+    [loginWithEmail],
   );
 
   /** メール新規登録 */
@@ -38,7 +38,7 @@ export function useAuth() {
     async (params: EmailSignUpParams): Promise<boolean> => {
       return registerWithEmail(params);
     },
-    [registerWithEmail]
+    [registerWithEmail],
   );
 
   /** ソーシャルログイン */
@@ -46,7 +46,7 @@ export function useAuth() {
     async (provider: SocialProvider): Promise<boolean> => {
       return loginWithSocial(provider);
     },
-    [loginWithSocial]
+    [loginWithSocial],
   );
 
   /** ログアウト */

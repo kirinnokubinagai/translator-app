@@ -1,11 +1,11 @@
-import { useState, useCallback, useRef } from "react";
-import { useAudioChunker } from "./use-audio-chunker";
+import { useCallback, useRef, useState } from "react";
+import { ApiError, getErrorMessage } from "@/lib/error";
+import { logger } from "@/lib/logger";
 import { transcribeSync } from "@/services/api/runpod";
 import { translateText } from "@/services/api/translator";
-import { useSettingsStore } from "@/store/settings-store";
 import { useQuotaStore } from "@/store/quota-store";
-import { logger } from "@/lib/logger";
-import { ApiError, getErrorMessage } from "@/lib/error";
+import { useSettingsStore } from "@/store/settings-store";
+import { useAudioChunker } from "./use-audio-chunker";
 
 /** 字幕の最大保持件数 */
 const MAX_SUBTITLE_LINES = 20;
@@ -57,16 +57,13 @@ export function useSubtitles(): UseSubtitlesReturn {
       setIsProcessing(true);
 
       try {
-        const sttResult = await transcribeSync(
-          base64,
-          settings.sourceLanguage
-        );
+        const sttResult = await transcribeSync(base64, settings.sourceLanguage);
         if (!sttResult.text.trim()) return;
 
         const translated = await translateText(
           sttResult.text,
           settings.sourceLanguage,
-          settings.targetLanguage
+          settings.targetLanguage,
         );
 
         counterRef.current += 1;
@@ -76,10 +73,7 @@ export function useSubtitles(): UseSubtitlesReturn {
           translatedText: translated,
           timestamp: Date.now(),
         };
-        setSubtitles((prev) => [
-          ...prev.slice(-(MAX_SUBTITLE_LINES - 1)),
-          line,
-        ]);
+        setSubtitles((prev) => [...prev.slice(-(MAX_SUBTITLE_LINES - 1)), line]);
 
         // サーバーから最新クォータ残高を同期
         await quotaStore.syncBalance();
@@ -100,7 +94,7 @@ export function useSubtitles(): UseSubtitlesReturn {
         }
       }
     },
-    [settings.sourceLanguage, settings.targetLanguage, quotaStore]
+    [settings.sourceLanguage, settings.targetLanguage, quotaStore],
   );
 
   /**

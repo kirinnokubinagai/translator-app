@@ -1,20 +1,14 @@
-import { View, Text, FlatList, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import {
-  History as HistoryIcon,
-  Trash2,
-  Volume2,
-  ArrowRight,
-  Mic,
-} from "lucide-react-native";
+import { ArrowRight, History as HistoryIcon, Mic, Trash2, Volume2 } from "lucide-react-native";
 import { useEffect } from "react";
-import { useMemoStore } from "@/store/memo-store";
+import { Alert, FlatList, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
-import { speak } from "@/services/api/tts";
 import { LANGUAGES } from "@/constants/languages";
 import { THEME } from "@/constants/theme";
 import { useT } from "@/i18n";
+import { speak } from "@/services/api/tts";
+import { useMemoStore } from "@/store/memo-store";
 import type { Memo } from "@/types/memo";
 
 /**
@@ -23,7 +17,7 @@ import type { Memo } from "@/types/memo";
  */
 export default function HistoryScreen() {
   const router = useRouter();
-  const { memos, isLoading, loadMemos, clearMemos } = useMemoStore();
+  const { memos, loadMemos, clearMemos } = useMemoStore();
   const t = useT();
 
   useEffect(() => {
@@ -154,9 +148,7 @@ export default function HistoryScreen() {
             paddingVertical: 4,
             paddingHorizontal: 8,
             borderRadius: THEME.borderRadius.sm,
-            backgroundColor: pressed
-              ? THEME.colors.primaryLight
-              : "transparent",
+            backgroundColor: pressed ? THEME.colors.primaryLight : "transparent",
           })}
         >
           <Volume2 size={16} color={THEME.colors.primary} />

@@ -150,7 +150,8 @@ export const en = {
   },
   diagnostic: {
     title: "Pipeline Diagnostic",
-    description: "Test each step: record -> STT -> translate.\nSpeak for 3 seconds after pressing the button.",
+    description:
+      "Test each step: record -> STT -> translate.\nSpeak for 3 seconds after pressing the button.",
     languagePairInfo: "Language pair (using conversation settings)",
     testing: "Testing...",
     retryTest: "Test again",

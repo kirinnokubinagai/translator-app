@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import type { Memo } from "@/types/memo";
 import {
+  clearAllMemos,
+  deleteMemo as deleteStoredMemo,
   getAllMemos,
   saveMemo,
-  deleteMemo as deleteStoredMemo,
-  clearAllMemos,
 } from "@/services/storage/memo-storage";
+import type { Memo } from "@/types/memo";
 
 type MemoState = {
   memos: Memo[];

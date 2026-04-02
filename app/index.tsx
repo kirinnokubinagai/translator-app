@@ -1,19 +1,17 @@
 import { Redirect } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
 import { useEffect, useState } from "react";
-import { useSettingsStore } from "@/store/settings-store";
-import { useAuthStore } from "@/store/auth-store";
+import { ActivityIndicator, View } from "react-native";
 import { THEME } from "@/constants/theme";
 import { logger } from "@/lib/logger";
+import { useAuthStore } from "@/store/auth-store";
+import { useSettingsStore } from "@/store/settings-store";
 
 /**
  * エントリーポイント
  * オンボーディング → 認証（セッション検証含む） → タブ画面の順にリダイレクト
  */
 export default function Index() {
-  const hasCompletedOnboarding = useSettingsStore(
-    (s) => s.hasCompletedOnboarding
-  );
+  const hasCompletedOnboarding = useSettingsStore((s) => s.hasCompletedOnboarding);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const initialize = useAuthStore((s) => s.initialize);

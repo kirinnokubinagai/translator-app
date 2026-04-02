@@ -1,6 +1,5 @@
 import * as Speech from "expo-speech";
 import { logger } from "@/lib/logger";
-import { LANGUAGES } from "@/constants/languages";
 import type { LanguageCode } from "@/types/language";
 
 /** expo-speechの言語コードマッピング */

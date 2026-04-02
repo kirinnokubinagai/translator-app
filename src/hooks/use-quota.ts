@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from "react";
-import { useQuotaStore } from "@/store/quota-store";
+import { useCallback, useEffect } from "react";
 import { QUOTA_LOW_THRESHOLD, TRANSCRIBE_COST, TRANSLATE_COST } from "@/constants/quota";
+import { useQuotaStore } from "@/store/quota-store";
 import type { QuotaPackType } from "@/types/quota";
 
 /**
@@ -57,16 +57,24 @@ export function useQuota() {
   }, [deductLocal]);
 
   /** 広告視聴でクォータ取得（nonce付き） */
-  const watchAdForQuota = useCallback(async (nonce: string): Promise<boolean> => {
-    return earnByAd(nonce);
-  }, [earnByAd]);
+  const watchAdForQuota = useCallback(
+    async (nonce: string): Promise<boolean> => {
+      return earnByAd(nonce);
+    },
+    [earnByAd],
+  );
 
   /** パック購入 */
   const purchasePack = useCallback(
-    async (pack: QuotaPackType, transactionId: string, productId?: string, appUserId?: string): Promise<boolean> => {
+    async (
+      pack: QuotaPackType,
+      transactionId: string,
+      productId?: string,
+      appUserId?: string,
+    ): Promise<boolean> => {
       return purchase(pack, transactionId, productId, appUserId);
     },
-    [purchase]
+    [purchase],
   );
 
   return {

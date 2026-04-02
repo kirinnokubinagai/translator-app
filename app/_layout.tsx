@@ -7,13 +7,14 @@ import { AppState, LogBox } from "react-native";
 if (__DEV__) {
   LogBox.ignoreLogs(["Cannot find native module 'ExpoSecureStore'"]);
 }
+
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { THEME } from "@/constants/theme";
+import { logger } from "@/lib/logger";
 import { preloadRewardedAd } from "@/services/ads/rewarded-ad";
 import { registerDevice } from "@/services/api/device";
 import { useQuotaStore } from "@/store/quota-store";
-import { logger } from "@/lib/logger";
 
 /** デバイス登録リトライの最大回数 */
 const REGISTER_MAX_RETRIES = 3;
@@ -35,7 +36,7 @@ async function registerDeviceWithRetry(): Promise<boolean> {
       return true;
     }
     if (attempt < REGISTER_MAX_RETRIES - 1) {
-      const delay = REGISTER_RETRY_DELAY_MS * Math.pow(2, attempt);
+      const delay = REGISTER_RETRY_DELAY_MS * 2 ** attempt;
       logger.warn("デバイス登録リトライ", { attempt: String(attempt + 1), delay: String(delay) });
       await new Promise((r) => setTimeout(r, delay));
     }

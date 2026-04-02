@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { View, Text, Pressable, Dimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { MessageSquare, Subtitles, Mic } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useSettingsStore } from "@/store/settings-store";
-import { useT } from "@/i18n";
+import { MessageSquare, Mic, Subtitles } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { THEME } from "@/constants/theme";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+import { useT } from "@/i18n";
+import { useSettingsStore } from "@/store/settings-store";
 
 /** ドットインジケーター */
 function DotIndicator({ total, current }: { total: number; current: number }) {
@@ -20,8 +18,7 @@ function DotIndicator({ total, current }: { total: number; current: number }) {
             width: index === current ? 24 : 8,
             height: 8,
             borderRadius: 4,
-            backgroundColor:
-              index === current ? THEME.colors.primary : THEME.colors.border,
+            backgroundColor: index === current ? THEME.colors.primary : THEME.colors.border,
           }}
         />
       ))}
@@ -36,9 +33,7 @@ function DotIndicator({ total, current }: { total: number; current: number }) {
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const router = useRouter();
-  const setHasCompletedOnboarding = useSettingsStore(
-    (s) => s.setHasCompletedOnboarding
-  );
+  const setHasCompletedOnboarding = useSettingsStore((s) => s.setHasCompletedOnboarding);
   const t = useT();
 
   /** スライドデータ */

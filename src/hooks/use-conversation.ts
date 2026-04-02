@@ -1,16 +1,16 @@
-import { useCallback, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
-import { useConversationStore } from "@/store/conversation-store";
-import { useSettingsStore } from "@/store/settings-store";
-import { useQuotaStore } from "@/store/quota-store";
-import { useAudioChunker } from "./use-audio-chunker";
+import { useCallback, useRef, useState } from "react";
+import { ApiError, getErrorMessage } from "@/lib/error";
+import { logger } from "@/lib/logger";
 import { transcribeSync } from "@/services/api/runpod";
 import { translateText } from "@/services/api/translator";
 import { speak } from "@/services/api/tts";
-import { logger } from "@/lib/logger";
-import { ApiError, getErrorMessage } from "@/lib/error";
+import { useConversationStore } from "@/store/conversation-store";
+import { useQuotaStore } from "@/store/quota-store";
+import { useSettingsStore } from "@/store/settings-store";
 import type { ConversationMessage, Speaker } from "@/types/conversation";
 import type { LanguageCode } from "@/types/language";
+import { useAudioChunker } from "./use-audio-chunker";
 
 type UseConversationReturn = {
   messages: ConversationMessage[];
@@ -72,7 +72,7 @@ export function useConversation(): UseConversationReturn {
         const translated = await translateText(
           sttResult.text,
           item.sourceLanguage,
-          item.targetLanguage
+          item.targetLanguage,
         );
 
         const message: ConversationMessage = {
@@ -117,18 +117,14 @@ export function useConversation(): UseConversationReturn {
       const currentSpeaker = activeSpeakerRef.current;
       const latestState = useConversationStore.getState();
       const sourceLanguage =
-        currentSpeaker === "speaker1"
-          ? latestState.speaker1Language
-          : latestState.speaker2Language;
+        currentSpeaker === "speaker1" ? latestState.speaker1Language : latestState.speaker2Language;
       const targetLanguage =
-        currentSpeaker === "speaker1"
-          ? latestState.speaker2Language
-          : latestState.speaker1Language;
+        currentSpeaker === "speaker1" ? latestState.speaker2Language : latestState.speaker1Language;
 
       queueRef.current.push({ base64, speaker: currentSpeaker, sourceLanguage, targetLanguage });
       drainQueue();
     },
-    [drainQueue]
+    [drainQueue],
   );
 
   /**
@@ -142,7 +138,7 @@ export function useConversation(): UseConversationReturn {
       store.setActiveSpeaker(speaker);
       await chunker.start(processChunk);
     },
-    [chunker, store, processChunk]
+    [chunker, store, processChunk],
   );
 
   /**

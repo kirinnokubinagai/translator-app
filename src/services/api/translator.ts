@@ -1,9 +1,9 @@
-import { apiRequest } from "./client";
-import { getAuthHeaders } from "./headers";
+import { API_BASE_URL } from "@/constants/api";
 import { TranslationError } from "@/lib/error";
 import { logger } from "@/lib/logger";
-import { API_BASE_URL } from "@/constants/api";
 import type { LanguageCode } from "@/types/language";
+import { apiRequest } from "./client";
+import { getAuthHeaders } from "./headers";
 
 /** TranslateGemma runsyncレスポンスの型 */
 type TranslateSyncResponse = {
@@ -27,27 +27,24 @@ type TranslateSyncResponse = {
 export async function translateText(
   text: string,
   sourceLanguage: LanguageCode,
-  targetLanguage: LanguageCode
+  targetLanguage: LanguageCode,
 ): Promise<string> {
   if (!text.trim()) return "";
 
   try {
     const requestUrl = `${API_BASE_URL}/api/translate`;
     const headers = await getAuthHeaders("POST", requestUrl);
-    const response = await apiRequest<TranslateSyncResponse>(
-      requestUrl,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          text,
-          sourceLanguage,
-          targetLanguage,
-        }),
-        timeout: 30000,
-        retries: 0,
-      }
-    );
+    const response = await apiRequest<TranslateSyncResponse>(requestUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        text,
+        sourceLanguage,
+        targetLanguage,
+      }),
+      timeout: 30000,
+      retries: 0,
+    });
 
     logger.debug("翻訳レスポンス", {
       status: response.status,

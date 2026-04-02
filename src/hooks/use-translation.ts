@@ -1,18 +1,14 @@
-import { useState, useCallback } from "react";
-import { translateText } from "@/services/api/translator";
+import { useCallback, useState } from "react";
 import { getErrorMessage } from "@/lib/error";
 import { logger } from "@/lib/logger";
+import { translateText } from "@/services/api/translator";
 import type { LanguageCode } from "@/types/language";
 
 type UseTranslationReturn = {
   isTranslating: boolean;
   translatedText: string;
   error: string | null;
-  translate: (
-    text: string,
-    source: LanguageCode,
-    target: LanguageCode
-  ) => Promise<string | null>;
+  translate: (text: string, source: LanguageCode, target: LanguageCode) => Promise<string | null>;
   reset: () => void;
 };
 
@@ -44,7 +40,7 @@ export function useTranslation(): UseTranslationReturn {
         setIsTranslating(false);
       }
     },
-    []
+    [],
   );
 
   const reset = useCallback(() => {

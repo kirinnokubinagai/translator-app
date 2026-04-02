@@ -1,9 +1,9 @@
-import { Pressable, Text, View } from "react-native";
-import { Coins } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useQuotaStore } from "@/store/quota-store";
-import { THEME } from "@/constants/theme";
+import { Coins } from "lucide-react-native";
+import { Pressable, Text } from "react-native";
 import { QUOTA_LOW_THRESHOLD } from "@/constants/quota";
+import { THEME } from "@/constants/theme";
+import { useQuotaStore } from "@/store/quota-store";
 
 /**
  * バッジの色を残高状態から決定する

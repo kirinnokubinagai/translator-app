@@ -1,14 +1,14 @@
-import { useCallback, useRef, useState } from "react";
 import {
-  useAudioRecorder as useExpoAudioRecorder,
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
+  useAudioRecorder as useExpoAudioRecorder,
 } from "expo-audio";
-import { audioToBase64 } from "@/services/audio/recorder";
+import { useCallback, useRef, useState } from "react";
 import { CHUNK_DURATION_MS } from "@/constants/audio";
-import { logger } from "@/lib/logger";
 import { t } from "@/i18n";
+import { logger } from "@/lib/logger";
+import { audioToBase64 } from "@/services/audio/recorder";
 import { useSettingsStore } from "@/store/settings-store";
 
 type UseAudioChunkerReturn = {
@@ -109,7 +109,7 @@ export function useAudioChunker(): UseAudioChunkerReturn {
 
       runChunkCycle();
     },
-    [runChunkCycle]
+    [runChunkCycle],
   );
 
   /**

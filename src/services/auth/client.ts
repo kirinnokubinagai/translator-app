@@ -51,7 +51,7 @@ export function getAuthClient() {
           body: JSON.stringify(params),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({})) as { message?: string };
+          const err = (await res.json().catch(() => ({}))) as { message?: string };
           throw new Error(err.message ?? "ログインに失敗しました");
         }
         const data = (await res.json()) as SignInEmailResult;
@@ -67,7 +67,7 @@ export function getAuthClient() {
           body: JSON.stringify(params),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({})) as { message?: string };
+          const err = (await res.json().catch(() => ({}))) as { message?: string };
           throw new Error(err.message ?? "登録に失敗しました");
         }
         const data = (await res.json()) as SignUpEmailResult;
@@ -81,7 +81,9 @@ export function getAuthClient() {
         headers: createAuthHeaders(sessionToken),
       });
       if (!res.ok) return null;
-      return (await res.json()) as { user: { id: string; email: string; name: string | null; image?: string | null } };
+      return (await res.json()) as {
+        user: { id: string; email: string; name: string | null; image?: string | null };
+      };
     },
     /** ログアウト */
     signOut: async (sessionToken?: string) => {

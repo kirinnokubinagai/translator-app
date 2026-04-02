@@ -1,6 +1,5 @@
 import { getDeviceId, getHmacKey, isDeviceRegistered } from "@/lib/device-id";
-import { getStoredUser, getStoredSessionToken } from "@/services/auth";
-import { logger } from "@/lib/logger";
+import { getStoredSessionToken, getStoredUser } from "@/services/auth";
 
 /**
  * HMAC-SHA256署名を生成する
@@ -14,15 +13,13 @@ import { logger } from "@/lib/logger";
  */
 async function computeHmacSha256(hmacKey: string, message: string): Promise<string> {
   const encoder = new TextEncoder();
-  const keyBytes = new Uint8Array(
-    (hmacKey.match(/.{2}/g) ?? []).map((b) => parseInt(b, 16))
-  );
+  const keyBytes = new Uint8Array((hmacKey.match(/.{2}/g) ?? []).map((b) => parseInt(b, 16)));
   const key = await crypto.subtle.importKey(
     "raw",
     keyBytes,
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
   return Array.from(new Uint8Array(signature))
@@ -49,7 +46,7 @@ async function computeHmacSha256(hmacKey: string, message: string): Promise<stri
  */
 export async function getAuthHeaders(
   method: string = "POST",
-  url?: string
+  url?: string,
 ): Promise<Record<string, string>> {
   const deviceId = await getDeviceId();
   const registered = await isDeviceRegistered();

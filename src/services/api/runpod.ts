@@ -1,8 +1,8 @@
-import { apiRequest } from "./client";
-import { getAuthHeaders } from "./headers";
+import { API_BASE_URL } from "@/constants/api";
 import { SpeechRecognitionError } from "@/lib/error";
 import { logger } from "@/lib/logger";
-import { API_BASE_URL } from "@/constants/api";
+import { apiRequest } from "./client";
+import { getAuthHeaders } from "./headers";
 
 /** Faster Whisperのrunsyncレスポンス */
 type WhisperSyncResponse = {
@@ -24,25 +24,22 @@ type WhisperSyncResponse = {
  */
 export async function transcribeSync(
   audioBase64: string,
-  language?: string
+  language?: string,
 ): Promise<{ text: string; detectedLanguage: string }> {
   try {
     const requestUrl = `${API_BASE_URL}/api/transcribe`;
     const headers = await getAuthHeaders("POST", requestUrl);
-    const response = await apiRequest<WhisperSyncResponse>(
-      requestUrl,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          audio_base64: audioBase64,
-          language: language ?? undefined,
-          model: "large-v3-turbo",
-        }),
-        timeout: 30000,
-        retries: 0,
-      }
-    );
+    const response = await apiRequest<WhisperSyncResponse>(requestUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        audio_base64: audioBase64,
+        language: language ?? undefined,
+        model: "large-v3-turbo",
+      }),
+      timeout: 30000,
+      retries: 0,
+    });
 
     logger.debug("Faster Whisperレスポンス", {
       status: response.status,
@@ -50,9 +47,7 @@ export async function transcribeSync(
     });
 
     if (response.status === "FAILED") {
-      throw new SpeechRecognitionError(
-        response.error ?? "音声認識に失敗しました"
-      );
+      throw new SpeechRecognitionError(response.error ?? "音声認識に失敗しました");
     }
 
     if (!response.output?.transcription) {

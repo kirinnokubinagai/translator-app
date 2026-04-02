@@ -1,33 +1,31 @@
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
-import { Coins, Play, Package, TrendingUp } from "lucide-react-native";
-import { useQuota } from "@/hooks/use-quota";
-import { QUOTA_PACKS, AD_REWARD_QUOTA } from "@/constants/quota";
+import { Coins, Package, Play, TrendingUp } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { AD_REWARD_QUOTA, QUOTA_PACKS } from "@/constants/quota";
 import { THEME } from "@/constants/theme";
+import { useQuota } from "@/hooks/use-quota";
 import { useT } from "@/i18n";
 import {
-  showRewardedAd,
   isRewardedAdReady,
   preloadRewardedAd,
+  showRewardedAd,
   subscribeRewardedAdReady,
 } from "@/services/ads/rewarded-ad";
-import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
-import { initRevenueCat, getOfferings, purchasePackage, getRevenueCatAppUserId } from "@/services/purchases/revenuecat";
-import { useState, useCallback, useEffect } from "react";
+import { consumeAdNonce, requestAdNonce } from "@/services/api/quota";
+import {
+  getOfferings,
+  getRevenueCatAppUserId,
+  initRevenueCat,
+  purchasePackage,
+} from "@/services/purchases/revenuecat";
 import type { QuotaPackType } from "@/types/quota";
 
 /**
  * クォータ管理・購入画面
  */
 export default function QuotaScreen() {
-  const {
-    balance,
-    isLoading,
-    error,
-    watchAdForQuota,
-    purchasePack,
-    syncBalance,
-    clearError,
-  } = useQuota();
+  const { balance, isLoading, error, watchAdForQuota, purchasePack, syncBalance, clearError } =
+    useQuota();
   const t = useT();
 
   const [purchasing, setPurchasing] = useState(false);
@@ -59,9 +57,7 @@ export default function QuotaScreen() {
       setPurchasing(true);
       try {
         const offerings = await getOfferings();
-        const pkg = offerings.find((p) =>
-          p.product.identifier.includes(pack)
-        );
+        const pkg = offerings.find((p) => p.product.identifier.includes(pack));
         if (!pkg) {
           throw new Error(t("quota.packageNotFound"));
         }
@@ -75,14 +71,14 @@ export default function QuotaScreen() {
             throw new Error(t("quota.transactionNotFound"));
           }
           const transactionId = latestTx.transactionIdentifier;
-          const appUserId = await getRevenueCatAppUserId() ?? undefined;
+          const appUserId = (await getRevenueCatAppUserId()) ?? undefined;
           await purchasePack(pack, transactionId, pkg.product.identifier, appUserId);
         }
       } finally {
         setPurchasing(false);
       }
     },
-    [purchasePack, t]
+    [purchasePack, t],
   );
 
   return (
@@ -204,75 +200,81 @@ export default function QuotaScreen() {
 
       {/* 購入セクション（RevenueCat初期化済みの場合のみ表示） */}
       {purchaseAvailable ? (
-      <>
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: "700",
-          color: THEME.colors.text,
-          marginBottom: 12,
-        }}
-      >
-        {t("quota.purchase")}
-      </Text>
-
-      {QUOTA_PACKS.map((pack) => (
-        <Pressable
-          key={pack.type}
-          onPress={() => handlePurchase(pack.type)}
-          disabled={purchasing || isLoading}
-          style={({ pressed }) => ({
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 12,
-            backgroundColor: THEME.colors.surface,
-            borderRadius: THEME.borderRadius.lg,
-            padding: 16,
-            marginBottom: 12,
-            borderWidth: 1,
-            borderColor: pressed ? THEME.colors.primary : THEME.colors.border,
-          })}
-        >
-          <View
+        <>
+          <Text
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: `${THEME.colors.primary}15`,
-              justifyContent: "center",
-              alignItems: "center",
+              fontSize: 16,
+              fontWeight: "700",
+              color: THEME.colors.text,
+              marginBottom: 12,
             }}
           >
-            <Package size={22} color={THEME.colors.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: "600", color: THEME.colors.text }}>
-              {pack.label} — {t("quota.quotaAmount", { amount: String(pack.amount) })}
-            </Text>
-            <Text style={{ fontSize: 13, color: THEME.colors.textSecondary, marginTop: 2 }}>
-              {t("quota.perUnit", { price: (pack.priceNum / pack.amount).toFixed(1) })}
-            </Text>
-          </View>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: THEME.colors.primary }}>
-            {pack.price}
+            {t("quota.purchase")}
           </Text>
-        </Pressable>
-      ))}
 
-      {purchasing && (
-        <View style={{ alignItems: "center", marginTop: 16 }}>
-          <ActivityIndicator color={THEME.colors.primary} />
-          <Text style={{ fontSize: 13, color: THEME.colors.textSecondary, marginTop: 8 }}>
-            {t("quota.purchasing")}
-          </Text>
-        </View>
-      )}
+          {QUOTA_PACKS.map((pack) => (
+            <Pressable
+              key={pack.type}
+              onPress={() => handlePurchase(pack.type)}
+              disabled={purchasing || isLoading}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                backgroundColor: THEME.colors.surface,
+                borderRadius: THEME.borderRadius.lg,
+                padding: 16,
+                marginBottom: 12,
+                borderWidth: 1,
+                borderColor: pressed ? THEME.colors.primary : THEME.colors.border,
+              })}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: `${THEME.colors.primary}15`,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Package size={22} color={THEME.colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "600", color: THEME.colors.text }}>
+                  {pack.label} — {t("quota.quotaAmount", { amount: String(pack.amount) })}
+                </Text>
+                <Text style={{ fontSize: 13, color: THEME.colors.textSecondary, marginTop: 2 }}>
+                  {t("quota.perUnit", { price: (pack.priceNum / pack.amount).toFixed(1) })}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: THEME.colors.primary }}>
+                {pack.price}
+              </Text>
+            </Pressable>
+          ))}
 
-      </>
+          {purchasing && (
+            <View style={{ alignItems: "center", marginTop: 16 }}>
+              <ActivityIndicator color={THEME.colors.primary} />
+              <Text style={{ fontSize: 13, color: THEME.colors.textSecondary, marginTop: 8 }}>
+                {t("quota.purchasing")}
+              </Text>
+            </View>
+          )}
+        </>
       ) : null}
 
       {/* 利用状況 */}
-      <View style={{ marginTop: 24, paddingTop: 24, borderTopWidth: 1, borderTopColor: THEME.colors.border }}>
+      <View
+        style={{
+          marginTop: 24,
+          paddingTop: 24,
+          borderTopWidth: 1,
+          borderTopColor: THEME.colors.border,
+        }}
+      >
         <Text
           style={{
             fontSize: 13,

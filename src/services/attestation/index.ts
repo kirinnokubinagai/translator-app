@@ -1,5 +1,5 @@
-import { Platform } from "react-native";
 import * as Crypto from "expo-crypto";
+import { Platform } from "react-native";
 import { logger } from "@/lib/logger";
 
 /** デバイス認証トークンの型 */
@@ -61,7 +61,7 @@ function loadModule(): DeviceAttestationModule | null {
  */
 export async function generateAttestationPayload(): Promise<AttestationPayload | null> {
   const mod = await loadModule();
-  if (!mod || !mod.isSupported) {
+  if (!mod?.isSupported) {
     logger.debug("デバイス認証がサポートされていません", {
       platform: Platform.OS,
       moduleLoaded: String(!!mod),

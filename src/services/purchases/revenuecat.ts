@@ -41,9 +41,7 @@ export async function initRevenueCat(): Promise<boolean> {
 /**
  * 利用可能なパッケージ（課金プラン）を取得
  */
-export async function getOfferings(): Promise<
-  import("react-native-purchases").PurchasesPackage[]
-> {
+export async function getOfferings(): Promise<import("react-native-purchases").PurchasesPackage[]> {
   if (!Purchases) return [];
   try {
     const offerings = await Purchases.getOfferings();
@@ -62,7 +60,7 @@ export async function getOfferings(): Promise<
  * @returns 購入成功時はCustomerInfo、キャンセル時はnull
  */
 export async function purchasePackage(
-  pkg: import("react-native-purchases").PurchasesPackage
+  pkg: import("react-native-purchases").PurchasesPackage,
 ): Promise<import("react-native-purchases").CustomerInfo | null> {
   if (!Purchases) return null;
   try {

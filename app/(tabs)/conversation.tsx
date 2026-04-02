@@ -1,34 +1,33 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { Loader2, MessageCircle, Play } from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
+  Animated,
+  type LayoutChangeEvent,
+  PanResponder,
+  Pressable,
   ScrollView,
   StyleSheet,
-  PanResponder,
-  LayoutChangeEvent,
-  Animated,
-  Pressable,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Loader2, MessageCircle, Play } from "lucide-react-native";
-import { useConversation } from "@/hooks/use-conversation";
-import { useConversationStore } from "@/store/conversation-store";
-import { useQuota } from "@/hooks/use-quota";
-import { LanguageSelector } from "@/components/ui/LanguageSelector";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { RecordButton } from "@/components/ui/RecordButton";
 import { QuotaEmptyModal } from "@/components/quota/QuotaEmptyModal";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { RecordButton } from "@/components/ui/RecordButton";
 import { THEME } from "@/constants/theme";
-import { t } from "@/i18n";
+import { useConversation } from "@/hooks/use-conversation";
+import { useQuota } from "@/hooks/use-quota";
 import type { Locale } from "@/i18n";
-import type { ConversationMessage } from "@/types/conversation";
+import { t, useT } from "@/i18n";
 import {
   preloadRewardedAd,
   showRewardedAd,
   subscribeRewardedAdReady,
 } from "@/services/ads/rewarded-ad";
-import { requestAdNonce, consumeAdNonce } from "@/services/api/quota";
-import { useT } from "@/i18n";
+import { consumeAdNonce, requestAdNonce } from "@/services/api/quota";
+import { useConversationStore } from "@/store/conversation-store";
+import type { ConversationMessage } from "@/types/conversation";
 
 /** 話者2エリアの背景色（淡い青みがかった白） */
 const SPEAKER2_BG = "#f0f9ff";
@@ -79,15 +78,8 @@ function toLocale(language: string): Locale {
  * └────────────────────────────────────┘
  */
 export default function ConversationScreen() {
-  const {
-    messages,
-    activeSpeaker,
-    isRecording,
-    isProcessing,
-    error,
-    startSpeaking,
-    stopSpeaking,
-  } = useConversation();
+  const { messages, activeSpeaker, isRecording, isProcessing, error, startSpeaking, stopSpeaking } =
+    useConversation();
 
   const store = useConversationStore();
   const { canStartConversation, watchAdForQuota, syncBalance } = useQuota();
@@ -143,8 +135,8 @@ export default function ConversationScreen() {
           SPLIT_RATIO_MIN,
           Math.min(
             SPLIT_RATIO_MAX,
-            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current
-          )
+            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current,
+          ),
         );
         setSplitRatio(newRatio);
       },
@@ -154,12 +146,12 @@ export default function ConversationScreen() {
           SPLIT_RATIO_MIN,
           Math.min(
             SPLIT_RATIO_MAX,
-            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current
-          )
+            splitRatioAtDragStart.current + gestureState.dy / containerHeightRef.current,
+          ),
         );
         setSplitRatio(newRatio);
       },
-    })
+    }),
   ).current;
 
   const handleSpeaker2Press = () => {
@@ -255,13 +247,15 @@ export default function ConversationScreen() {
               {allMsgsSorted.length === 0 && !isSpeaker2Recording ? (
                 <EmptyHint text={t(sp2Locale, "conversation.emptyState")} />
               ) : (
-                allMsgsSorted.slice(-6).map((m) => (
-                  <MessageBubble
-                    key={m.id}
-                    message={m}
-                    showOriginalAsMain={m.speaker === "speaker2"}
-                  />
-                ))
+                allMsgsSorted
+                  .slice(-6)
+                  .map((m) => (
+                    <MessageBubble
+                      key={m.id}
+                      message={m}
+                      showOriginalAsMain={m.speaker === "speaker2"}
+                    />
+                  ))
               )}
             </ScrollView>
 
@@ -291,7 +285,7 @@ export default function ConversationScreen() {
             ) : null}
 
             {/* クォータ不足時のインライン広告ボタン（話者2用） */}
-            {error && error.toLowerCase().includes("quota") && activeSpeaker === "speaker2" && isAdReady ? (
+            {error?.toLowerCase().includes("quota") && activeSpeaker === "speaker2" && isAdReady ? (
               <View style={styles.inlineAdButton}>
                 <Pressable
                   onPress={handleWatchAdFromModal}
@@ -317,10 +311,7 @@ export default function ConversationScreen() {
         </View>
 
         {/* ===== ドラッグ可能な区切り線 ===== */}
-        <View
-          {...dividerPanResponder.panHandlers}
-          style={styles.dividerTouchArea}
-        >
+        <View {...dividerPanResponder.panHandlers} style={styles.dividerTouchArea}>
           <View style={styles.dividerLine}>
             {isProcessing ? (
               <View style={styles.dividerProcessing}>
@@ -356,13 +347,15 @@ export default function ConversationScreen() {
               {allMsgsSorted.length === 0 && !isSpeaker1Recording ? (
                 <EmptyHint text={t(sp1Locale, "conversation.emptyState")} />
               ) : (
-                allMsgsSorted.slice(-6).map((m) => (
-                  <MessageBubble
-                    key={m.id}
-                    message={m}
-                    showOriginalAsMain={m.speaker === "speaker1"}
-                  />
-                ))
+                allMsgsSorted
+                  .slice(-6)
+                  .map((m) => (
+                    <MessageBubble
+                      key={m.id}
+                      message={m}
+                      showOriginalAsMain={m.speaker === "speaker1"}
+                    />
+                  ))
               )}
             </ScrollView>
 
@@ -392,7 +385,7 @@ export default function ConversationScreen() {
             ) : null}
 
             {/* クォータ不足時のインライン広告ボタン（話者1用） */}
-            {error && error.toLowerCase().includes("quota") && activeSpeaker !== "speaker2" && isAdReady ? (
+            {error?.toLowerCase().includes("quota") && activeSpeaker !== "speaker2" && isAdReady ? (
               <View style={styles.inlineAdButton}>
                 <Pressable
                   onPress={handleWatchAdFromModal}
@@ -441,9 +434,7 @@ function EmptyHint({ text }: { text: string }) {
     <View style={styles.emptyHint}>
       <MessageCircle size={32} color={THEME.colors.textMuted} />
       <Text style={styles.emptyHintTitle}>{text}</Text>
-      <Text style={styles.emptyHintSub}>
-        {/* マイクボタンから録音してください */}
-      </Text>
+      <Text style={styles.emptyHintSub}>{/* マイクボタンから録音してください */}</Text>
     </View>
   );
 }
@@ -486,7 +477,9 @@ function MessageBubble({ message, showOriginalAsMain }: MessageBubbleProps) {
         { backgroundColor: isMine ? BUBBLE_MINE_BG : BUBBLE_THEIRS_BG, opacity: fadeAnim },
       ]}
     >
-      <Text style={[styles.bubbleTranslated, isMine && { color: THEME.colors.primaryDark }]}>{mainText}</Text>
+      <Text style={[styles.bubbleTranslated, isMine && { color: THEME.colors.primaryDark }]}>
+        {mainText}
+      </Text>
       {subText ? <Text style={styles.bubbleOriginal}>{subText}</Text> : null}
     </Animated.View>
   );

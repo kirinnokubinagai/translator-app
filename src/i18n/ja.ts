@@ -150,7 +150,8 @@ export const ja = {
   },
   diagnostic: {
     title: "パイプライン診断",
-    description: "録音→音声認識→翻訳の各ステップをテストします。\nボタンを押したら3秒間話してください。",
+    description:
+      "録音→音声認識→翻訳の各ステップをテストします。\nボタンを押したら3秒間話してください。",
     languagePairInfo: "使用言語ペア（会話画面の設定を使用）",
     testing: "テスト中...",
     retryTest: "もう一度テスト",

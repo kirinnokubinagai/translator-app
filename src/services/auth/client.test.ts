@@ -109,7 +109,7 @@ describe("getAuthClient", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("/api/auth/sign-in/email"),
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
@@ -130,7 +130,7 @@ describe("getAuthClient", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("/api/auth/sign-up/email"),
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
@@ -147,7 +147,7 @@ describe("getAuthClient", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("/api/auth/sign-out"),
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST" }),
     );
   });
 
@@ -164,7 +164,7 @@ describe("getAuthClient", () => {
     });
 
     await expect(
-      client.signIn.email({ email: "bad@example.com", password: "wrong" })
+      client.signIn.email({ email: "bad@example.com", password: "wrong" }),
     ).rejects.toThrow("認証情報が正しくありません");
   });
 
@@ -181,7 +181,7 @@ describe("getAuthClient", () => {
     });
 
     await expect(
-      client.signUp.email({ email: "dup@example.com", password: "Pass12345", name: "テスト" })
+      client.signUp.email({ email: "dup@example.com", password: "Pass12345", name: "テスト" }),
     ).rejects.toThrow("すでに登録されています");
   });
 
@@ -207,11 +207,13 @@ describe("getAuthClient", () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      json: async () => { throw new Error("JSON parse error"); },
+      json: async () => {
+        throw new Error("JSON parse error");
+      },
     });
 
     await expect(
-      client.signIn.email({ email: "test@example.com", password: "pass" })
+      client.signIn.email({ email: "test@example.com", password: "pass" }),
     ).rejects.toThrow("ログインに失敗しました");
   });
 });
