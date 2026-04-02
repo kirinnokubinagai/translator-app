@@ -14,6 +14,7 @@ import { THEME } from "@/constants/theme";
 import { logger } from "@/lib/logger";
 import { preloadRewardedAd } from "@/services/ads/rewarded-ad";
 import { registerDevice } from "@/services/api/device";
+import { warmupEndpoints } from "@/services/api/warmup";
 import { useQuotaStore } from "@/store/quota-store";
 
 /** デバイス登録リトライの最大回数 */
@@ -52,8 +53,14 @@ export default function RootLayout() {
   const registered = useRef(false);
 
   useEffect(() => {
+    // デバイス登録とウォームアップを並列実行
     registerDeviceWithRetry().then((ok) => {
       registered.current = ok;
+    });
+    warmupEndpoints().catch((error) => {
+      logger.warn("ウォームアップ失敗（非致命的）", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     });
     preloadRewardedAd();
 

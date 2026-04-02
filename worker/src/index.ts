@@ -898,6 +898,13 @@ export default {
     }
 
     try {
+      // --- ウォームアップAPI（認証不要） ---
+      if (path === "/api/warmup" && request.method === "POST") {
+        const resp = await handleWarmup(env, origin);
+        endMetric(resp.status);
+        return resp;
+      }
+
       // --- クォータ管理API ---
       if (path === "/api/quota/init" && request.method === "POST") {
         const resp = await handleQuotaInit(request, env, origin);
@@ -1465,6 +1472,40 @@ async function handleQuotaPurchase(
 // ==========================================
 // 既存API（クォータチェック付き）
 // ==========================================
+
+/**
+ * RunPodエンドポイントをウォームアップする
+ *
+ * 両エンドポイントの /health を並列で叩き、ワーカーのコールドスタートを開始させる。
+ * 認証不要（デバイスID不要）で呼べるようにする。
+ */
+async function handleWarmup(env: Env, origin: string): Promise<Response> {
+  const endpoints = [
+    { name: "whisper", id: env.RUNPOD_WHISPER_ENDPOINT_ID },
+    { name: "translate", id: env.RUNPOD_TRANSLATE_ENDPOINT_ID },
+  ];
+
+  const results = await Promise.allSettled(
+    endpoints.map(async (ep) => {
+      const url = `https://api.runpod.ai/v2/${ep.id}/health`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${env.RUNPOD_API_KEY}` },
+      });
+      const data = await res.json() as { workers?: { ready?: number; running?: number; idle?: number; initializing?: number } };
+      return { name: ep.name, status: res.status, workers: data.workers ?? null };
+    }),
+  );
+
+  const statuses = results.map((r, i) => {
+    if (r.status === "fulfilled") return r.value;
+    return { name: endpoints[i].name, status: 0, workers: null, error: String((r as PromiseRejectedResult).reason) };
+  });
+
+  return new Response(JSON.stringify({ success: true, data: statuses }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+  });
+}
 
 /**
  * 音声認識（runsync同期方式）
