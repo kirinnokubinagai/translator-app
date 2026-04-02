@@ -185,8 +185,6 @@ npx wrangler secret put APPLE_CLIENT_SECRET
 npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put REVENUECAT_API_KEY
-npx wrangler secret put APP_SECRET
-
 # デプロイ
 npx wrangler deploy
 ```
@@ -199,6 +197,16 @@ npx wrangler deploy
    - TranslateGemma: `ghcr.io/<owner>/translategemma-worker:4b` / GPU: T4 / min workers: 0
    - Network Volume: `/runpod-volume` にマウント
 3. Endpoint IDをCloudflare Workerシークレットに設定
+
+### AdMob 本番ID設定
+
+`app.json` の AdMob App ID は現在 Google 公式テストIDです。
+本番ビルド前に `app.json` の以下を実際の AdMob App ID に差し替えてください:
+
+```json
+"androidAppId": "ca-app-pub-XXXXX~XXXXX",
+"iosAppId": "ca-app-pub-XXXXX~XXXXX"
+```
 
 ### アプリ (EAS Build)
 

@@ -2,8 +2,7 @@
  * 翻訳アプリ用APIプロキシ（クォータ管理付き・Turso SQL版）
  *
  * 認証方式:
- * 1. HMAC署名（推奨）: デバイス登録後、サーバー発行のhmac_keyでリクエストに署名
- * 2. APP_SECRET（レガシー）: 静的トークンによる認証（移行期間中のフォールバック）
+ * HMAC署名: デバイス登録後、サーバー発行のhmac_keyでリクエストに署名
  */
 
 import { createClient, type Client } from "@libsql/client";
@@ -654,10 +653,10 @@ async function verifyHmacSignature(
 // ==========================================
 
 /**
- * アプリ認証を検証する（HMAC署名 or レガシーAPP_SECRET）
+ * アプリ認証を検証する（HMAC署名）
  *
- * HMAC署名ヘッダーが存在する場合はHMAC認証を試行し、
- * なければレガシーのAPP_SECRET Bearer認証にフォールバックする。
+ * HMAC署名ヘッダー（X-Auth-Device-Id, X-Request-Timestamp, X-Request-Signature）
+ * が存在し、署名が有効であれば認証成功。
  *
  * @returns 認証成功時は true、失敗時は false
  */

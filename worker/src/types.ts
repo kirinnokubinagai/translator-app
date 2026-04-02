@@ -8,8 +8,6 @@ export type Env = {
   RUNPOD_WHISPER_ENDPOINT_ID: string;
   /** RunPod 翻訳エンドポイントID */
   RUNPOD_TRANSLATE_ENDPOINT_ID: string;
-  /** アプリ認証シークレット */
-  APP_SECRET: string;
   /** CORS許可オリジン */
   ALLOWED_ORIGIN: string;
   /** 開発モードフラグ */
