@@ -14,7 +14,7 @@ import { THEME } from "@/constants/theme";
 import { logger } from "@/lib/logger";
 import { preloadRewardedAd } from "@/services/ads/rewarded-ad";
 import { registerDevice } from "@/services/api/device";
-import { warmupEndpoints } from "@/services/api/warmup";
+import { fireWarmup } from "@/services/api/warmup";
 import { useQuotaStore } from "@/store/quota-store";
 
 /** デバイス登録リトライの最大回数 */
@@ -53,23 +53,23 @@ export default function RootLayout() {
   const registered = useRef(false);
 
   useEffect(() => {
-    // デバイス登録とウォームアップを並列実行
+    // ウォームアップ: fire-and-forget（1回だけ送信、応答不要）
+    fireWarmup();
+
     registerDeviceWithRetry().then((ok) => {
       registered.current = ok;
     });
-    warmupEndpoints().catch((error) => {
-      logger.warn("ウォームアップ失敗（非致命的）", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    });
     preloadRewardedAd();
 
-    // アプリ復帰時に未登録なら再試行
+    // アプリ復帰時に未登録なら再試行 + ウォームアップ再送信
     const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active" && !registered.current) {
-        registerDeviceWithRetry().then((ok) => {
-          registered.current = ok;
-        });
+      if (state === "active") {
+        fireWarmup();
+        if (!registered.current) {
+          registerDeviceWithRetry().then((ok) => {
+            registered.current = ok;
+          });
+        }
       }
     });
     return () => sub.remove();
