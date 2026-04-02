@@ -198,16 +198,6 @@ npx wrangler deploy
    - Network Volume: `/runpod-volume` にマウント
 3. Endpoint IDをCloudflare Workerシークレットに設定
 
-### AdMob 本番ID設定
-
-`app.json` の AdMob App ID は現在 Google 公式テストIDです。
-本番ビルド前に `app.json` の以下を実際の AdMob App ID に差し替えてください:
-
-```json
-"androidAppId": "ca-app-pub-XXXXX~XXXXX",
-"iosAppId": "ca-app-pub-XXXXX~XXXXX"
-```
-
 ### アプリ (EAS Build)
 
 ```bash
