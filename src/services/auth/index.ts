@@ -146,9 +146,9 @@ async function persistSessionToken(token: string | null): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
     });
   }
-  // 本番環境では平文ストレージへのフォールバックを警告
+  // 本番環境では平文ストレージへのフォールバックを禁止
   if (!__DEV__) {
-    logger.warn("セッショントークンがAsyncStorage（非暗号化）に保存されます");
+    throw new Error("SecureStoreが利用できません。機密情報の安全な保存に失敗しました");
   }
   if (token) {
     await AsyncStorage.setItem(AUTH_SESSION_TOKEN_KEY, token);

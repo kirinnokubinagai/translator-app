@@ -112,7 +112,7 @@ async function persistDeviceSecret(secret: string): Promise<void> {
     });
   }
   if (!__DEV__) {
-    logger.warn("デバイスシークレットがAsyncStorage（非暗号化）に保存されます");
+    throw new Error("SecureStoreが利用できません。機密情報の安全な保存に失敗しました");
   }
   await AsyncStorage.setItem(DEVICE_SECRET_KEY, secret);
 }
@@ -204,6 +204,9 @@ export async function persistHmacKey(hmacKey: string): Promise<void> {
     logger.warn("SecureStoreへのHMACキー保存に失敗、AsyncStorageにフォールバック", {
       error: error instanceof Error ? error.message : String(error),
     });
+  }
+  if (!__DEV__) {
+    throw new Error("SecureStoreが利用できません。機密情報の安全な保存に失敗しました");
   }
   await AsyncStorage.setItem(DEVICE_HMAC_KEY, hmacKey);
 }

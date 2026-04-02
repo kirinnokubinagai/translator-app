@@ -51,12 +51,15 @@ const STEP_LABEL_KEYS = [
 export function useDiagnosticRecorder(): UseDiagnosticReturn {
   const t = useT();
 
-  const createInitialSteps = (): DiagnosticStep[] =>
-    STEP_LABEL_KEYS.map((key) => ({
-      label: t(key),
-      status: "pending" as StepStatus,
-      detail: "",
-    }));
+  const createInitialSteps = useCallback(
+    (): DiagnosticStep[] =>
+      STEP_LABEL_KEYS.map((key) => ({
+        label: t(key),
+        status: "pending" as StepStatus,
+        detail: "",
+      })),
+    [t],
+  );
 
   const [steps, setSteps] = useState<DiagnosticStep[]>(createInitialSteps);
   const [isRunning, setIsRunning] = useState(false);
@@ -66,9 +69,9 @@ export function useDiagnosticRecorder(): UseDiagnosticReturn {
   } | null>(null);
   const recorder = useExpoAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
-  const updateStep = (index: number, status: StepStatus, detail: string) => {
+  const updateStep = useCallback((index: number, status: StepStatus, detail: string) => {
     setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, status, detail } : s)));
-  };
+  }, []);
 
   const startTest = useCallback(
     async (sourceLang: LanguageCode, targetLang: LanguageCode) => {
@@ -188,12 +191,7 @@ export function useDiagnosticRecorder(): UseDiagnosticReturn {
 
       setIsRunning(false);
     },
-    [
-      recorder,
-      t,
-      createInitialSteps, // Step 5: 翻訳送信
-      updateStep,
-    ],
+    [recorder, t, createInitialSteps, updateStep],
   );
 
   const reset = useCallback(() => {

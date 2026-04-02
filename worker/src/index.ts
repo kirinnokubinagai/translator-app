@@ -874,7 +874,6 @@ export default {
     const rateLimitDeviceId = getUserId(request);
     if (rateLimitDeviceId) {
       const rlDb = getDb(env);
-      await ensureRateLimitSchema(rlDb);
       if (await isApiRateLimited(rlDb, rateLimitDeviceId)) {
         return errorResponse(
           "リクエストが多すぎます。しばらく待ってから再度お試しください",
