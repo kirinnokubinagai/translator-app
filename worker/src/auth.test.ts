@@ -5,82 +5,14 @@
  * Node.js 18+ではcrypto.subtleが標準利用可能。
  */
 
-// timingSafeEqualとhashPassword/verifyPasswordはauth.tsのプライベート関数のため、
-// テスト用にモジュール内部をテストできるよう関数を再実装してテストする。
-// auth.tsはbetter-auth等の外部依存があるため、純粋なロジック部分のみ抽出してテスト。
+// better-auth および関連パッケージはESMのため、Jest(CommonJS)環境でモックして回避する。
+// テスト対象の hashPassword / verifyPassword / timingSafeEqual はこれらに依存しない。
+jest.mock("better-auth", () => ({ betterAuth: jest.fn() }));
+jest.mock("better-auth/adapters/drizzle", () => ({ drizzleAdapter: jest.fn() }));
+jest.mock("drizzle-orm/libsql", () => ({ drizzle: jest.fn() }));
+jest.mock("@libsql/client", () => ({ createClient: jest.fn() }));
 
-/** PBKDF2イテレーション回数（auth.tsと同じ値） */
-const PBKDF2_ITERATIONS = 100000;
-
-/**
- * テスト用: auth.tsのhashPasswordと同等の実装
- */
-async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
-  const hash = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
-    key,
-    256,
-  );
-  const saltHex = Array.from(salt)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  const hashHex = Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return `pbkdf2:${PBKDF2_ITERATIONS}:${saltHex}:${hashHex}`;
-}
-
-/**
- * テスト用: auth.tsのtimingSafeEqualと同等の実装
- */
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-  let diff = 0;
-  for (let i = 0; i < bufA.length; i++) {
-    diff |= bufA[i] ^ bufB[i];
-  }
-  return diff === 0;
-}
-
-/**
- * テスト用: auth.tsのverifyPasswordと同等の実装
- */
-async function verifyPassword(params: { hash: string; password: string }): Promise<boolean> {
-  const parts = params.hash.split(":");
-  if (parts[0] !== "pbkdf2" || parts.length !== 4) return false;
-  const iterations = parseInt(parts[1], 10);
-  const saltMatch = parts[2].match(/.{2}/g);
-  if (!saltMatch) return false;
-  const salt = new Uint8Array(saltMatch.map((b) => parseInt(b, 16)));
-  const storedHash = parts[3];
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(params.password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
-  const hash = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
-    key,
-    256,
-  );
-  const hashHex = Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return timingSafeEqual(hashHex, storedHash);
-}
+import { hashPassword, verifyPassword, timingSafeEqual, PBKDF2_ITERATIONS } from "./auth";
 
 describe("hashPassword", () => {
   it("正しいフォーマット pbkdf2:iterations:salt:hash を返すこと", async () => {

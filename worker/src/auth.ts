@@ -13,12 +13,12 @@ import type { Env } from "./types";
 import * as schema from "./schema";
 
 /** PBKDF2イテレーション回数 */
-const PBKDF2_ITERATIONS = 100000;
+export const PBKDF2_ITERATIONS = 100000;
 
 /**
  * Web Crypto APIを使ったPBKDF2パスワードハッシュ（Workers環境で高速）
  */
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey(
     "raw",
@@ -43,7 +43,7 @@ async function hashPassword(password: string): Promise<string> {
  * 文字列比較は一致しない文字が見つかった時点で早期リターンするため、
  * タイミングサイドチャネル攻撃に脆弱。全バイトを必ず比較して回避する。
  */
-function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   const encoder = new TextEncoder();
   const bufA = encoder.encode(a);
@@ -58,7 +58,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 /**
  * PBKDF2パスワード検証（タイミングセーフ比較）
  */
-async function verifyPassword(params: { hash: string; password: string }): Promise<boolean> {
+export async function verifyPassword(params: { hash: string; password: string }): Promise<boolean> {
   const parts = params.hash.split(":");
   if (parts[0] !== "pbkdf2" || parts.length !== 4) return false;
   const iterations = parseInt(parts[1], 10);

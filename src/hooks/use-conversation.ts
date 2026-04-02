@@ -9,7 +9,7 @@ import { useConversationStore } from "@/store/conversation-store";
 import { useQuotaStore } from "@/store/quota-store";
 import { useSettingsStore } from "@/store/settings-store";
 import type { ConversationMessage, Speaker } from "@/types/conversation";
-import type { LanguageCode } from "@/types/language";
+import { enqueueChunk, type QueueItem } from "./conversation-queue";
 import { useAudioChunker } from "./use-audio-chunker";
 
 type UseConversationReturn = {
@@ -41,13 +41,6 @@ export function useConversation(): UseConversationReturn {
   /** chunkerへの参照（クォータ不足時に停止するため） */
   const chunkerRef = useRef(chunker);
   chunkerRef.current = chunker;
-  /** キューアイテム（録音時点の話者・言語をスナップショット） */
-  type QueueItem = {
-    base64: string;
-    speaker: Speaker;
-    sourceLanguage: LanguageCode;
-    targetLanguage: LanguageCode;
-  };
   /** チャンク処理キュー（逐次実行を保証） */
   const queueRef = useRef<QueueItem[]>([]);
   const isQueueRunningRef = useRef(false);
@@ -116,12 +109,13 @@ export function useConversation(): UseConversationReturn {
     (base64: string) => {
       const currentSpeaker = activeSpeakerRef.current;
       const latestState = useConversationStore.getState();
-      const sourceLanguage =
-        currentSpeaker === "speaker1" ? latestState.speaker1Language : latestState.speaker2Language;
-      const targetLanguage =
-        currentSpeaker === "speaker1" ? latestState.speaker2Language : latestState.speaker1Language;
-
-      queueRef.current.push({ base64, speaker: currentSpeaker, sourceLanguage, targetLanguage });
+      enqueueChunk(
+        queueRef.current,
+        base64,
+        currentSpeaker,
+        latestState.speaker1Language,
+        latestState.speaker2Language,
+      );
       drainQueue();
     },
     [drainQueue],

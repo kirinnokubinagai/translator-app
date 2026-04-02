@@ -4,17 +4,11 @@
  * チャンクキューの逐次処理・話者/言語スナップショット・停止後のキュー処理を
  * モックベースで検証する。
  *
- * Reactフックを直接テストせず、フック内部のキュー処理ロジックを
- * 純粋関数として抽出・テストする方針。
+ * Reactフックを直接テストせず、conversation-queue.ts の enqueueChunk（実装）を
+ * インポートしてキューエンキューロジックを直接テストする方針。
  */
 
-/** チャンクキューアイテムの型（use-conversation.ts のQueueItemと同等） */
-type QueueItem = {
-  base64: string;
-  speaker: "speaker1" | "speaker2";
-  sourceLanguage: string;
-  targetLanguage: string;
-};
+import { enqueueChunk, type QueueItem } from "./conversation-queue";
 
 /** 処理結果の型 */
 type ProcessedItem = {
@@ -47,25 +41,6 @@ async function drainQueueSimulation(
   }
 
   return results;
-}
-
-/**
- * キューにアイテムを追加する（話者・言語をスナップショット）
- *
- * use-conversation.ts の processChunk ロジックを再現。
- * 追加時点の言語設定をキャプチャする。
- */
-function enqueueChunk(
-  queue: QueueItem[],
-  base64: string,
-  speaker: "speaker1" | "speaker2",
-  speaker1Language: string,
-  speaker2Language: string,
-): void {
-  const sourceLanguage = speaker === "speaker1" ? speaker1Language : speaker2Language;
-  const targetLanguage = speaker === "speaker1" ? speaker2Language : speaker1Language;
-
-  queue.push({ base64, speaker, sourceLanguage, targetLanguage });
 }
 
 describe("チャンクキューの逐次処理", () => {
