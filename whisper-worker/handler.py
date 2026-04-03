@@ -123,7 +123,7 @@ def handler(event):
                 temperature=temperature_list,
                 condition_on_previous_text=condition_on_previous_text,
                 compression_ratio_threshold=compression_ratio_threshold,
-                logprob_threshold=logprob_threshold,
+                log_prob_threshold=logprob_threshold,
                 no_speech_threshold=no_speech_threshold,
             )
 
