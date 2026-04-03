@@ -12,9 +12,8 @@ from transformers import AutoProcessor, Gemma3ForConditionalGeneration
 MODEL_ID = "google/translategemma-4b-it"
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
-# Network Volumeを使う場合は /runpod-volume にマウント
-# 環境変数でキャッシュディレクトリを指定
-CACHE_DIR = os.environ.get("HF_HOME", "/runpod-volume/huggingface")
+# モデルはDockerイメージ内に事前ダウンロード済み
+CACHE_DIR = os.environ.get("HF_HOME", "/app/models")
 os.environ["HF_HOME"] = CACHE_DIR
 os.environ["TRANSFORMERS_CACHE"] = f"{CACHE_DIR}/hub"
 

@@ -19,8 +19,17 @@ RUN pip install --no-cache-dir \
     protobuf \
     huggingface_hub
 
+# ビルド時にモデルをダウンロードしてイメージに焼き込む
+ARG HF_TOKEN
+ENV HF_HOME=/app/models
+RUN mkdir -p /app/models && \
+    python -c "from huggingface_hub import snapshot_download; snapshot_download('google/translategemma-4b-it', token='${HF_TOKEN}', cache_dir='/app/models/hub')"
+
 # ハンドラーコピー
 COPY handler.py /app/handler.py
+
+# キャッシュディレクトリをイメージ内に固定
+ENV TRANSFORMERS_CACHE=/app/models/hub
 
 # 実行
 CMD ["python", "-u", "/app/handler.py"]
