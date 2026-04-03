@@ -11,6 +11,11 @@ RUN pip3 install --no-cache-dir \
     faster-whisper==1.1.0 \
     huggingface_hub
 
+# ビルド時にモデルをダウンロードしてイメージに焼き込む
+ENV WHISPER_CACHE_DIR=/app/models
+RUN mkdir -p /app/models && \
+    python3 -c "from huggingface_hub import snapshot_download; snapshot_download('deepdml/faster-whisper-large-v3-turbo-ct2', cache_dir='/app/models')"
+
 WORKDIR /app
 COPY handler.py /app/handler.py
 

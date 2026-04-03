@@ -9,11 +9,10 @@ import tempfile
 import runpod
 from faster_whisper import WhisperModel
 
-# Network Volumeキャッシュディレクトリ
+# モデルはDockerイメージ内に事前ダウンロード済み
 CACHE_DIR = os.environ.get(
-    "WHISPER_CACHE_DIR", "/runpod-volume/huggingface/whisper"
+    "WHISPER_CACHE_DIR", "/app/models"
 )
-os.environ["HF_HOME"] = "/runpod-volume/huggingface"
 
 # デフォルトモデルとcompute_type
 DEFAULT_MODEL = "large-v3-turbo"
