@@ -21,17 +21,14 @@ RUN pip install --no-cache-dir \
 
 # ビルド時にモデルをダウンロードしてイメージに焼き込む
 ARG HF_TOKEN
-ENV HF_HOME=/app/models
-ENV HF_TOKEN_BUILD=${HF_TOKEN}
 RUN mkdir -p /app/models && \
-    python -c "import os; from huggingface_hub import snapshot_download; snapshot_download('google/translategemma-4b-it', token=os.environ.get('HF_TOKEN_BUILD',''), cache_dir='/app/models/hub')"
-# ビルド後にトークンを消去
-ENV HF_TOKEN_BUILD=
+    HF_TOKEN=${HF_TOKEN} python -c "import os; from huggingface_hub import snapshot_download; snapshot_download('google/translategemma-4b-it', token=os.environ['HF_TOKEN'], cache_dir='/app/models/hub')"
 
 # ハンドラーコピー
 COPY handler.py /app/handler.py
 
 # キャッシュディレクトリをイメージ内に固定
+ENV HF_HOME=/app/models
 ENV TRANSFORMERS_CACHE=/app/models/hub
 
 # 実行
