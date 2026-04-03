@@ -7,7 +7,11 @@ import { addQuotaByAd, fetchQuotaBalance, initQuota, purchaseQuota } from "@/ser
 import { useSettingsStore } from "@/store/settings-store";
 import type { QuotaPackType } from "@/types/quota";
 
+/** ローカルキャッシュがstaleと判定される閾値（ミリ秒） */
+const STALE_THRESHOLD_MS = 30_000;
+
 type QuotaState = {
+  /** ローカルキャッシュ残高（サーバー値を正として定期同期する） */
   balance: number;
   totalPurchased: number;
   totalEarnedByAd: number;
@@ -15,12 +19,17 @@ type QuotaState = {
   isInitialized: boolean;
   isLoading: boolean;
   error: string | null;
+  /** サーバーから最後に同期した時刻（エポックミリ秒） */
+  lastSyncedAt: number;
 
   /** 初期化（初回起動時に呼ぶ） */
   initialize: () => Promise<void>;
 
-  /** サーバーから残高を同期 */
+  /** サーバーから残高を同期（正の値として上書き） */
   syncBalance: () => Promise<void>;
+
+  /** ローカルキャッシュがstaleかどうか */
+  isStale: () => boolean;
 
   /** 広告視聴でクォータ追加（nonce付き） */
   earnByAd: (nonce: string) => Promise<boolean>;
@@ -51,6 +60,7 @@ export const useQuotaStore = create<QuotaState>()(
       isInitialized: false,
       isLoading: false,
       error: null,
+      lastSyncedAt: 0,
 
       initialize: async () => {
         if (get().isInitialized) {
@@ -65,6 +75,7 @@ export const useQuotaStore = create<QuotaState>()(
             balance: res.data.balance,
             isInitialized: true,
             isLoading: false,
+            lastSyncedAt: Date.now(),
           });
           logger.info("クォータ初期化完了", {
             balance: String(res.data.balance),
@@ -88,6 +99,7 @@ export const useQuotaStore = create<QuotaState>()(
             totalPurchased: res.data.totalPurchased,
             totalEarnedByAd: res.data.totalEarnedByAd,
             totalConsumed: res.data.totalConsumed,
+            lastSyncedAt: Date.now(),
           });
         } catch (error) {
           logger.warn("クォータ残高同期失敗", {
@@ -95,6 +107,8 @@ export const useQuotaStore = create<QuotaState>()(
           });
         }
       },
+
+      isStale: () => Date.now() - get().lastSyncedAt > STALE_THRESHOLD_MS,
 
       earnByAd: async (nonce: string) => {
         set({ isLoading: true, error: null });
@@ -146,6 +160,12 @@ export const useQuotaStore = create<QuotaState>()(
           balance: Math.max(0, state.balance - amount),
           totalConsumed: state.totalConsumed + amount,
         }));
+        // stale の場合はバックグラウンドでサーバー同期（fire-and-forget）
+        if (get().isStale()) {
+          get()
+            .syncBalance()
+            .catch(() => {});
+        }
       },
 
       clearError: () => set({ error: null }),
@@ -159,6 +179,7 @@ export const useQuotaStore = create<QuotaState>()(
         totalEarnedByAd: state.totalEarnedByAd,
         totalConsumed: state.totalConsumed,
         isInitialized: state.isInitialized,
+        lastSyncedAt: state.lastSyncedAt,
       }),
     },
   ),
