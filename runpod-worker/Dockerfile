@@ -20,9 +20,9 @@ RUN pip install --no-cache-dir \
     huggingface_hub
 
 # ビルド時にモデルをダウンロードしてイメージに焼き込む
-ARG HF_TOKEN
-ENV HF_TOKEN=${HF_TOKEN}
-RUN mkdir -p /app/models && \
+RUN --mount=type=secret,id=HF_TOKEN \
+    mkdir -p /app/models && \
+    HF_TOKEN=$(cat /run/secrets/HF_TOKEN) \
     python -c "from huggingface_hub import snapshot_download; snapshot_download('google/translategemma-4b-it', cache_dir='/app/models/hub')"
 
 # ハンドラーコピー
